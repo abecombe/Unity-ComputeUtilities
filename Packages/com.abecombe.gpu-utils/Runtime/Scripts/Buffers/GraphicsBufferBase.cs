@@ -1,13 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Object = UnityEngine.Object;
 
 namespace Abecombe.GpuTools
 {
-    public interface IGPUBuffer : IDisposable
+    public interface IGraphicsBuffer : IDisposable
     {
         public GraphicsBuffer Data { get; }
         public GraphicsBuffer.Target BufferTarget { get; }
@@ -39,19 +40,19 @@ namespace Abecombe.GpuTools
         public void GetData<U>(U[] data) where U : struct;
         public void GetData<U>(U[] data, int managedBufferStartIndex, int graphicsBufferStartIndex, int count) where U : struct;
 
-        public void CopyTo(IGPUBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1);
-        public void CopyFrom(IGPUBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1);
-        public void CopyTo(CommandBuffer cb, IGPUBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1);
-        public void CopyFrom(CommandBuffer cb, IGPUBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1);
-        public void CopyTo(IComputeCommandBuffer cb, IGPUBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1);
-        public void CopyFrom(IComputeCommandBuffer cb, IGPUBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1);
+        public void CopyTo(IGraphicsBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1);
+        public void CopyFrom(IGraphicsBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1);
+        public void CopyTo(CommandBuffer cb, IGraphicsBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1);
+        public void CopyFrom(CommandBuffer cb, IGraphicsBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1);
+        public void CopyTo(IComputeCommandBuffer cb, IGraphicsBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1);
+        public void CopyFrom(IComputeCommandBuffer cb, IGraphicsBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1);
 
         public void Clear();
         public void Clear(CommandBuffer cmd);
         public void Clear(IComputeCommandBuffer cmd);
     }
 
-    public abstract class GPUBufferBase<T> : IGPUBuffer
+    public abstract class GraphicsBufferBase<T> : IGraphicsBuffer
         where T : struct
     {
         public GraphicsBuffer Data { get; protected set; }
@@ -61,14 +62,16 @@ namespace Abecombe.GpuTools
         public int Stride => Data.stride;
         public int Bytes => Length * Stride;
 
-        protected GPUComputeShader GPUUtilsCs = new();
+        protected ComputeProgram _utilityProgram = new();
 
         public bool Inited { get; protected set; } = false;
 
-        protected void InitBufferCs()
+        protected void InitBufferProgram()
         {
             Data = new GraphicsBuffer(BufferTarget, Length, Marshal.SizeOf(typeof(T)));
-            GPUUtilsCs.Init(GPUStatics.UtilsShaderName);
+            var gpuToolsComputeConfig = Resources.Load<GpuToolsComputeConfig>(ComputeShaderUtility.GpuToolsComputeConfigPath);
+            var gpuToolsCs = Object.Instantiate(gpuToolsComputeConfig.GpuToolsCs);
+            _utilityProgram.Init(gpuToolsCs);
         }
 
         public virtual void Dispose()
@@ -162,7 +165,7 @@ namespace Abecombe.GpuTools
             Data.GetData(data, managedBufferStartIndex, graphicsBufferStartIndex, count);
         }
 
-        public void CopyTo(IGPUBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
+        public void CopyTo(IGraphicsBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
         {
             if (Stride != toBuffer.Stride)
             {
@@ -188,31 +191,31 @@ namespace Abecombe.GpuTools
             {
                 case <= 0:
                     return;
-                case > 1024 * GPUConstants.MaxDispatchSize:
+                case > 1024 * ComputeLimits.MaxDispatchSize:
                     Debug.LogError("Buffer copy count exceeds maximum dispatch size, please use your own copy method");
                     return;
             }
 
-            var cs = GPUUtilsCs;
-            var kernel = cs.FindKernel(count == 1 ? GPUStatics.CopyBuffer1KernelName : count <= 32 ? GPUStatics.CopyBuffer32KernelName : count <= 128 * GPUConstants.MaxDispatchSize ? GPUStatics.CopyBuffer128KernelName : GPUStatics.CopyBuffer1024KernelName);
+            var cs = _utilityProgram;
+            var kernel = cs.FindKernel(count == 1 ? ComputeShaderUtility.CopyBuffer1KernelName : count <= 32 ? ComputeShaderUtility.CopyBuffer32KernelName : count <= 128 * ComputeLimits.MaxDispatchSize ? ComputeShaderUtility.CopyBuffer128KernelName : ComputeShaderUtility.CopyBuffer1024KernelName);
 
             int uintScaling = Stride / sizeof(uint);
 
-            cs.SetInt(GPUStatics.BufferCountShaderPropertyID, count);
-            cs.SetInt(GPUStatics.BufferUIntCountShaderPropertyID, count * uintScaling);
-            cs.SetInt(GPUStatics.FromBufferUIntStartIndexShaderPropertyID, fromBufferStartIndex * uintScaling);
-            cs.SetInt(GPUStatics.ToBufferUIntStartIndexShaderPropertyID, toBufferStartIndex * uintScaling);
-            kernel.SetBuffer(GPUStatics.FromBufferShaderPropertyID, Data);
-            kernel.SetBuffer(GPUStatics.ToBufferShaderPropertyID, toBuffer.Data);
+            cs.SetInt(ComputeShaderUtility.BufferCountShaderPropertyID, count);
+            cs.SetInt(ComputeShaderUtility.BufferUIntCountShaderPropertyID, count * uintScaling);
+            cs.SetInt(ComputeShaderUtility.FromBufferUIntStartIndexShaderPropertyID, fromBufferStartIndex * uintScaling);
+            cs.SetInt(ComputeShaderUtility.ToBufferUIntStartIndexShaderPropertyID, toBufferStartIndex * uintScaling);
+            kernel.SetBuffer(ComputeShaderUtility.FromBufferShaderPropertyID, Data);
+            kernel.SetBuffer(ComputeShaderUtility.ToBufferShaderPropertyID, toBuffer.Data);
 
             kernel.DispatchDesired(count);
         }
-        public void CopyFrom(IGPUBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
+        public void CopyFrom(IGraphicsBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
         {
             fromBuffer.CopyTo(this, fromBufferStartIndex, toBufferStartIndex, count);
         }
 
-        public void CopyTo(CommandBuffer cb, IGPUBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
+        public void CopyTo(CommandBuffer cb, IGraphicsBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
         {
             if (Stride != toBuffer.Stride)
             {
@@ -238,31 +241,31 @@ namespace Abecombe.GpuTools
             {
                 case <= 0:
                     return;
-                case > 1024 * GPUConstants.MaxDispatchSize:
+                case > 1024 * ComputeLimits.MaxDispatchSize:
                     Debug.LogError("Buffer copy count exceeds maximum dispatch size, please use your own copy method");
                     return;
             }
 
-            var cs = GPUUtilsCs;
-            var kernel = cs.FindKernel(count == 1 ? GPUStatics.CopyBuffer1KernelName : count <= 32 ? GPUStatics.CopyBuffer32KernelName : count <= 128 * GPUConstants.MaxDispatchSize ? GPUStatics.CopyBuffer128KernelName : GPUStatics.CopyBuffer1024KernelName);
+            var cs = _utilityProgram;
+            var kernel = cs.FindKernel(count == 1 ? ComputeShaderUtility.CopyBuffer1KernelName : count <= 32 ? ComputeShaderUtility.CopyBuffer32KernelName : count <= 128 * ComputeLimits.MaxDispatchSize ? ComputeShaderUtility.CopyBuffer128KernelName : ComputeShaderUtility.CopyBuffer1024KernelName);
 
             int uintScaling = Stride / sizeof(uint);
 
-            cs.SetInt(cb, GPUStatics.BufferCountShaderPropertyID, count);
-            cs.SetInt(cb, GPUStatics.BufferUIntCountShaderPropertyID, count * uintScaling);
-            cs.SetInt(cb, GPUStatics.FromBufferUIntStartIndexShaderPropertyID, fromBufferStartIndex * uintScaling);
-            cs.SetInt(cb, GPUStatics.ToBufferUIntStartIndexShaderPropertyID, toBufferStartIndex * uintScaling);
-            kernel.SetBuffer(cb, GPUStatics.FromBufferShaderPropertyID, Data);
-            kernel.SetBuffer(cb, GPUStatics.ToBufferShaderPropertyID, toBuffer.Data);
+            cs.SetInt(cb, ComputeShaderUtility.BufferCountShaderPropertyID, count);
+            cs.SetInt(cb, ComputeShaderUtility.BufferUIntCountShaderPropertyID, count * uintScaling);
+            cs.SetInt(cb, ComputeShaderUtility.FromBufferUIntStartIndexShaderPropertyID, fromBufferStartIndex * uintScaling);
+            cs.SetInt(cb, ComputeShaderUtility.ToBufferUIntStartIndexShaderPropertyID, toBufferStartIndex * uintScaling);
+            kernel.SetBuffer(cb, ComputeShaderUtility.FromBufferShaderPropertyID, Data);
+            kernel.SetBuffer(cb, ComputeShaderUtility.ToBufferShaderPropertyID, toBuffer.Data);
 
             kernel.DispatchDesired(cb, count);
         }
-        public void CopyFrom(CommandBuffer cb, IGPUBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
+        public void CopyFrom(CommandBuffer cb, IGraphicsBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
         {
             fromBuffer.CopyTo(cb, this, fromBufferStartIndex, toBufferStartIndex, count);
         }
 
-        public void CopyTo(IComputeCommandBuffer cb, IGPUBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
+        public void CopyTo(IComputeCommandBuffer cb, IGraphicsBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
         {
             if (Stride != toBuffer.Stride)
             {
@@ -288,26 +291,26 @@ namespace Abecombe.GpuTools
             {
                 case <= 0:
                     return;
-                case > 1024 * GPUConstants.MaxDispatchSize:
+                case > 1024 * ComputeLimits.MaxDispatchSize:
                     Debug.LogError("Buffer copy count exceeds maximum dispatch size, please use your own copy method");
                     return;
             }
 
-            var cs = GPUUtilsCs;
-            var kernel = cs.FindKernel(count == 1 ? GPUStatics.CopyBuffer1KernelName : count <= 32 ? GPUStatics.CopyBuffer32KernelName : count <= 128 * GPUConstants.MaxDispatchSize ? GPUStatics.CopyBuffer128KernelName : GPUStatics.CopyBuffer1024KernelName);
+            var cs = _utilityProgram;
+            var kernel = cs.FindKernel(count == 1 ? ComputeShaderUtility.CopyBuffer1KernelName : count <= 32 ? ComputeShaderUtility.CopyBuffer32KernelName : count <= 128 * ComputeLimits.MaxDispatchSize ? ComputeShaderUtility.CopyBuffer128KernelName : ComputeShaderUtility.CopyBuffer1024KernelName);
 
             int uintScaling = Stride / sizeof(uint);
 
-            cs.SetInt(cb, GPUStatics.BufferCountShaderPropertyID, count);
-            cs.SetInt(cb, GPUStatics.BufferUIntCountShaderPropertyID, count * uintScaling);
-            cs.SetInt(cb, GPUStatics.FromBufferUIntStartIndexShaderPropertyID, fromBufferStartIndex * uintScaling);
-            cs.SetInt(cb, GPUStatics.ToBufferUIntStartIndexShaderPropertyID, toBufferStartIndex * uintScaling);
-            kernel.SetBuffer(cb, GPUStatics.FromBufferShaderPropertyID, Data);
-            kernel.SetBuffer(cb, GPUStatics.ToBufferShaderPropertyID, toBuffer.Data);
+            cs.SetInt(cb, ComputeShaderUtility.BufferCountShaderPropertyID, count);
+            cs.SetInt(cb, ComputeShaderUtility.BufferUIntCountShaderPropertyID, count * uintScaling);
+            cs.SetInt(cb, ComputeShaderUtility.FromBufferUIntStartIndexShaderPropertyID, fromBufferStartIndex * uintScaling);
+            cs.SetInt(cb, ComputeShaderUtility.ToBufferUIntStartIndexShaderPropertyID, toBufferStartIndex * uintScaling);
+            kernel.SetBuffer(cb, ComputeShaderUtility.FromBufferShaderPropertyID, Data);
+            kernel.SetBuffer(cb, ComputeShaderUtility.ToBufferShaderPropertyID, toBuffer.Data);
 
             kernel.DispatchDesired(cb, count);
         }
-        public void CopyFrom(IComputeCommandBuffer cb, IGPUBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
+        public void CopyFrom(IComputeCommandBuffer cb, IGraphicsBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
         {
             fromBuffer.CopyTo(cb, this, fromBufferStartIndex, toBufferStartIndex, count);
         }
@@ -319,21 +322,21 @@ namespace Abecombe.GpuTools
                 Debug.LogError("Clear kernel only supports Raw buffers, please use your own clear method");
                 return;
             }
-            if (Length > 1024 * GPUConstants.MaxDispatchSize)
+            if (Length > 1024 * ComputeLimits.MaxDispatchSize)
             {
                 Debug.LogError("Buffer clear count exceeds maximum dispatch size, please use your own clear method");
             }
 
             var count = Length;
 
-            var cs = GPUUtilsCs;
-            var kernel = cs.FindKernel(count == 1 ? GPUStatics.ClearBuffer1KernelName : count <= 32 ? GPUStatics.ClearBuffer32KernelName : count <= 128 * GPUConstants.MaxDispatchSize ? GPUStatics.ClearBuffer128KernelName : GPUStatics.ClearBuffer1024KernelName);
+            var cs = _utilityProgram;
+            var kernel = cs.FindKernel(count == 1 ? ComputeShaderUtility.ClearBuffer1KernelName : count <= 32 ? ComputeShaderUtility.ClearBuffer32KernelName : count <= 128 * ComputeLimits.MaxDispatchSize ? ComputeShaderUtility.ClearBuffer128KernelName : ComputeShaderUtility.ClearBuffer1024KernelName);
 
             int uintScaling = Stride / sizeof(uint);
 
-            cs.SetInt(GPUStatics.BufferCountShaderPropertyID, count);
-            cs.SetInt(GPUStatics.BufferUIntCountShaderPropertyID, count * uintScaling);
-            kernel.SetBuffer(GPUStatics.BufferShaderPropertyID, Data);
+            cs.SetInt(ComputeShaderUtility.BufferCountShaderPropertyID, count);
+            cs.SetInt(ComputeShaderUtility.BufferUIntCountShaderPropertyID, count * uintScaling);
+            kernel.SetBuffer(ComputeShaderUtility.BufferShaderPropertyID, Data);
 
             kernel.DispatchDesired(count);
         }
@@ -344,21 +347,21 @@ namespace Abecombe.GpuTools
                 Debug.LogError("Clear kernel only supports Raw buffers, please use your own clear method");
                 return;
             }
-            if (Length > 1024 * GPUConstants.MaxDispatchSize)
+            if (Length > 1024 * ComputeLimits.MaxDispatchSize)
             {
                 Debug.LogError("Buffer clear count exceeds maximum dispatch size, please use your own clear method");
             }
 
             var count = Length;
 
-            var cs = GPUUtilsCs;
-            var kernel = cs.FindKernel(count == 1 ? GPUStatics.ClearBuffer1KernelName : count <= 32 ? GPUStatics.ClearBuffer32KernelName : count <= 128 * GPUConstants.MaxDispatchSize ? GPUStatics.ClearBuffer128KernelName : GPUStatics.ClearBuffer1024KernelName);
+            var cs = _utilityProgram;
+            var kernel = cs.FindKernel(count == 1 ? ComputeShaderUtility.ClearBuffer1KernelName : count <= 32 ? ComputeShaderUtility.ClearBuffer32KernelName : count <= 128 * ComputeLimits.MaxDispatchSize ? ComputeShaderUtility.ClearBuffer128KernelName : ComputeShaderUtility.ClearBuffer1024KernelName);
 
             int uintScaling = Stride / sizeof(uint);
 
-            cs.SetInt(cb, GPUStatics.BufferCountShaderPropertyID, count);
-            cs.SetInt(cb, GPUStatics.BufferUIntCountShaderPropertyID, count * uintScaling);
-            kernel.SetBuffer(cb, GPUStatics.BufferShaderPropertyID, Data);
+            cs.SetInt(cb, ComputeShaderUtility.BufferCountShaderPropertyID, count);
+            cs.SetInt(cb, ComputeShaderUtility.BufferUIntCountShaderPropertyID, count * uintScaling);
+            kernel.SetBuffer(cb, ComputeShaderUtility.BufferShaderPropertyID, Data);
 
             kernel.DispatchDesired(cb, count);
         }
@@ -369,58 +372,58 @@ namespace Abecombe.GpuTools
                 Debug.LogError("Clear kernel only supports Raw buffers, please use your own clear method");
                 return;
             }
-            if (Length > 1024 * GPUConstants.MaxDispatchSize)
+            if (Length > 1024 * ComputeLimits.MaxDispatchSize)
             {
                 Debug.LogError("Buffer clear count exceeds maximum dispatch size, please use your own clear method");
             }
 
             var count = Length;
 
-            var cs = GPUUtilsCs;
-            var kernel = cs.FindKernel(count == 1 ? GPUStatics.ClearBuffer1KernelName : count <= 32 ? GPUStatics.ClearBuffer32KernelName : count <= 128 * GPUConstants.MaxDispatchSize ? GPUStatics.ClearBuffer128KernelName : GPUStatics.ClearBuffer1024KernelName);
+            var cs = _utilityProgram;
+            var kernel = cs.FindKernel(count == 1 ? ComputeShaderUtility.ClearBuffer1KernelName : count <= 32 ? ComputeShaderUtility.ClearBuffer32KernelName : count <= 128 * ComputeLimits.MaxDispatchSize ? ComputeShaderUtility.ClearBuffer128KernelName : ComputeShaderUtility.ClearBuffer1024KernelName);
 
             int uintScaling = Stride / sizeof(uint);
 
-            cs.SetInt(cb, GPUStatics.BufferCountShaderPropertyID, count);
-            cs.SetInt(cb, GPUStatics.BufferUIntCountShaderPropertyID, count * uintScaling);
-            kernel.SetBuffer(cb, GPUStatics.BufferShaderPropertyID, Data);
+            cs.SetInt(cb, ComputeShaderUtility.BufferCountShaderPropertyID, count);
+            cs.SetInt(cb, ComputeShaderUtility.BufferUIntCountShaderPropertyID, count * uintScaling);
+            kernel.SetBuffer(cb, ComputeShaderUtility.BufferShaderPropertyID, Data);
 
             kernel.DispatchDesired(cb, count);
         }
 
-        public static implicit operator GraphicsBuffer(GPUBufferBase<T> buffer)
+        public static implicit operator GraphicsBuffer(GraphicsBufferBase<T> buffer)
         {
             return buffer.Data;
         }
     }
 
-    public static class GPUBufferExtensions
+    public static class GraphicsBufferExtensions
     {
-        public static void SetGPUBuffer(this GPUComputeShader cs, GPUKernel kernel, string name, IGPUBuffer buffer)
+        public static void SetGraphicsBuffer(this ComputeProgram cs, ComputeKernel kernel, string name, IGraphicsBuffer buffer)
         {
             cs.SetBuffer(kernel, name, buffer.Data);
         }
-        public static void SetGPUBuffer(this GPUKernel kernel, string name, IGPUBuffer buffer)
+        public static void SetGraphicsBuffer(this ComputeKernel kernel, string name, IGraphicsBuffer buffer)
         {
-            kernel.Cs.SetGPUBuffer(kernel, name, buffer);
+            kernel.Program.SetGraphicsBuffer(kernel, name, buffer);
         }
 
-        public static void SetGPUBuffer(this GPUComputeShader cs, CommandBuffer cb, GPUKernel kernel, string name, IGPUBuffer buffer)
+        public static void SetGraphicsBuffer(this ComputeProgram cs, CommandBuffer cb, ComputeKernel kernel, string name, IGraphicsBuffer buffer)
         {
             cs.SetBuffer(cb, kernel, name, buffer.Data);
         }
-        public static void SetGPUBuffer(this GPUKernel kernel, CommandBuffer cb, string name, IGPUBuffer buffer)
+        public static void SetGraphicsBuffer(this ComputeKernel kernel, CommandBuffer cb, string name, IGraphicsBuffer buffer)
         {
-            kernel.Cs.SetGPUBuffer(cb, kernel, name, buffer);
+            kernel.Program.SetGraphicsBuffer(cb, kernel, name, buffer);
         }
 
-        public static void SetGPUBuffer(this GPUComputeShader cs, IComputeCommandBuffer cb, GPUKernel kernel, string name, IGPUBuffer buffer)
+        public static void SetGraphicsBuffer(this ComputeProgram cs, IComputeCommandBuffer cb, ComputeKernel kernel, string name, IGraphicsBuffer buffer)
         {
             cs.SetBuffer(cb, kernel, name, buffer.Data);
         }
-        public static void SetGPUBuffer(this GPUKernel kernel, IComputeCommandBuffer cb, string name, IGPUBuffer buffer)
+        public static void SetGraphicsBuffer(this ComputeKernel kernel, IComputeCommandBuffer cb, string name, IGraphicsBuffer buffer)
         {
-            kernel.Cs.SetGPUBuffer(cb, kernel, name, buffer);
+            kernel.Program.SetGraphicsBuffer(cb, kernel, name, buffer);
         }
     }
 }

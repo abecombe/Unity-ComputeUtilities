@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace Abecombe.GpuTools
 {
-    public static class GPUStatics
+    public static class ComputeShaderUtility
     {
         // for AsyncCompute
         public static bool SimulationUseBuffer1 { get; private set; } = true;
@@ -15,15 +15,15 @@ namespace Abecombe.GpuTools
             SimulationUseBuffer1 = !SimulationUseBuffer1;
         }
 
-        // for GPUComputeShader
+        // for ComputeProgram
         internal const string DirectDispatch = "DIRECT_DISPATCH";
         internal const string IndirectDispatch = "INDIRECT_DISPATCH";
 
-        // for GPUKernel
+        // for ComputeKernel
         internal static readonly int DispatchThreadSizeShaderPropertyID = Shader.PropertyToID("_DispatchThreadSize");
 
-        // for GPUBufferBase
-        internal const string UtilsShaderName = "GPUUtils";
+        // for GraphicsBufferBase
+        internal const string GpuToolsComputeConfigPath = "GpuTools/GpuTools";
         internal const string CopyBuffer1KernelName = "CopyBuffer1";
         internal const string CopyBuffer32KernelName = "CopyBuffer32";
         internal const string CopyBuffer128KernelName = "CopyBuffer128";
@@ -40,22 +40,22 @@ namespace Abecombe.GpuTools
         internal static readonly int ToBufferShaderPropertyID = Shader.PropertyToID("_ToBuffer");
         internal static readonly int BufferShaderPropertyID = Shader.PropertyToID("_Buffer");
 
-        // for GPUStructuredBuffer
+        // for StructuredBuffer
         internal static readonly string[] StructuredBufferConcatNames = { "", "Length", "Size", "StartIndex", "EndIndex", "IndexToPosition", "PositionToIndex", "PositionToFloorIndex" };
 
-        // for GPUIndirectArgumentsBuffer
+        // for IndirectArgumentsBuffer
         internal static readonly string[] IndirectArgumentsBufferConcatNames = { "", "CountBufferOffset", "CountBufferSize" };
 
-        // for GPUDispatchIndirectArgsBuffer
+        // for DispatchIndirectArgumentsBuffer
         internal const string BuildDispatchIndirectKernelName = "BuildDispatchIndirect";
         internal static readonly int CountBufferShaderPropertyID = Shader.PropertyToID("_CountBuffer");
         internal static readonly int DispatchThreadSizeBufferShaderPropertyID = Shader.PropertyToID("_DispatchThreadSizeBuffer");
-        internal static readonly int DispatchIndirectArgsBufferShaderPropertyID = Shader.PropertyToID("_DispatchIndirectArgsBuffer");
+        internal static readonly int DispatchIndirectArgumentsBufferShaderPropertyID = Shader.PropertyToID("_DispatchIndirectArgumentsBuffer");
         internal static readonly int CountBufferOffsetShaderPropertyID = Shader.PropertyToID("_CountBufferOffset");
         internal static readonly int CountBufferSizeShaderPropertyID = Shader.PropertyToID("_CountBufferSize");
         internal static readonly int ThreadGroupSizeShaderPropertyID = Shader.PropertyToID("_ThreadGroupSize");
 
-        // for GPUAppendConsumeBuffer
+        // for AppendConsumeBuffer
         internal static readonly string[] AppendConsumeBufferConcatNames = { "", "CountBuffer" };
 
         /// This method must be called inside an `unsafe` block.

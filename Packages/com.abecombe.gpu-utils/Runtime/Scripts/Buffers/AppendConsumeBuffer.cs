@@ -1,20 +1,20 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Abecombe.GpuTools
 {
-    public interface IGPUAppendConsumeBuffer : IGPUBuffer
+    public interface IAppendConsumeBuffer : IGraphicsBuffer
     {
-        public GPUIndirectArgumentsBuffer CountBuffer { get; }
+        public IndirectArgumentsBuffer CountBuffer { get; }
 
         public void Init(int size);
 
         public void UpdateCountBuffer();
-        public void CopyCountTo(GPUBufferBase<uint> dest, int destOffset = 0);
+        public void CopyCountTo(GraphicsBufferBase<uint> dest, int destOffset = 0);
         public void UpdateCountBuffer(CommandBuffer cb);
-        public void CopyCountTo(CommandBuffer cb, GPUBufferBase<uint> dest, int destOffset = 0);
+        public void CopyCountTo(CommandBuffer cb, GraphicsBufferBase<uint> dest, int destOffset = 0);
         public void UpdateCountBuffer(IComputeCommandBuffer cb);
-        public void CopyCountTo(IComputeCommandBuffer cb, GPUBufferBase<uint> dest, int destOffset = 0);
+        public void CopyCountTo(IComputeCommandBuffer cb, GraphicsBufferBase<uint> dest, int destOffset = 0);
 
         public void SetCounterValue(uint value);
         public void ResetCounter();
@@ -26,7 +26,7 @@ namespace Abecombe.GpuTools
         public uint GetCounterValue();
     }
 
-    public class GPUAppendConsumeBuffer<T> : GPUBufferBase<T>, IGPUAppendConsumeBuffer
+    public class AppendConsumeBuffer<T> : GraphicsBufferBase<T>, IAppendConsumeBuffer
         where T : struct
     {
         public override GraphicsBuffer.Target BufferTarget => GraphicsBuffer.Target.Append;
@@ -34,13 +34,13 @@ namespace Abecombe.GpuTools
         public override int Length => _length;
         protected int _length;
 
-        public GPUIndirectArgumentsBuffer CountBuffer { get; } = new();
+        public IndirectArgumentsBuffer CountBuffer { get; } = new();
 
         public void Init(int size)
         {
             Dispose();
             _length = size;
-            InitBufferCs();
+            InitBufferProgram();
             ResetCounter();
             CountBuffer.Init(1);
             Inited = true;
@@ -61,7 +61,7 @@ namespace Abecombe.GpuTools
         {
             GraphicsBuffer.CopyCount(Data, CountBuffer, 0);
         }
-        public void CopyCountTo(GPUBufferBase<uint> dest, int destOffset = 0)
+        public void CopyCountTo(GraphicsBufferBase<uint> dest, int destOffset = 0)
         {
             GraphicsBuffer.CopyCount(Data, dest, destOffset * dest.Stride);
         }
@@ -69,7 +69,7 @@ namespace Abecombe.GpuTools
         {
             cb.CopyCounterValue(Data, CountBuffer, 0);
         }
-        public void CopyCountTo(CommandBuffer cb, GPUBufferBase<uint> dest, int destOffset = 0)
+        public void CopyCountTo(CommandBuffer cb, GraphicsBufferBase<uint> dest, int destOffset = 0)
         {
             cb.CopyCounterValue(Data, dest, (uint)(destOffset * dest.Stride));
         }
@@ -77,7 +77,7 @@ namespace Abecombe.GpuTools
         {
             cb.CopyCounterValue(Data, CountBuffer, 0);
         }
-        public void CopyCountTo(IComputeCommandBuffer cb, GPUBufferBase<uint> dest, int destOffset = 0)
+        public void CopyCountTo(IComputeCommandBuffer cb, GraphicsBufferBase<uint> dest, int destOffset = 0)
         {
             cb.CopyCounterValue(Data, dest, (uint)(destOffset * dest.Stride));
         }
@@ -116,75 +116,75 @@ namespace Abecombe.GpuTools
         }
     }
 
-    public static class GPUAppendConsumeBufferExtensions
+    public static class AppendConsumeBufferExtensions
     {
-        public static void SetGPUAppendBuffer(this GPUComputeShader cs, GPUKernel kernel, string name, IGPUAppendConsumeBuffer buffer, bool resetBuffer = false)
+        public static void SetAppendBuffer(this ComputeProgram cs, ComputeKernel kernel, string name, IAppendConsumeBuffer buffer, bool resetBuffer = false)
         {
             if (resetBuffer) buffer.ResetCounter();
             cs.SetBuffer(kernel, name, buffer.Data);
         }
-        public static void SetGPUAppendBuffer(this GPUKernel kernel, string name, IGPUAppendConsumeBuffer buffer, bool resetBuffer = false)
+        public static void SetAppendBuffer(this ComputeKernel kernel, string name, IAppendConsumeBuffer buffer, bool resetBuffer = false)
         {
-            kernel.Cs.SetGPUAppendBuffer(kernel, name, buffer, resetBuffer);
+            kernel.Program.SetAppendBuffer(kernel, name, buffer, resetBuffer);
         }
 
-        public static void SetGPUAppendBuffer(this GPUComputeShader cs, CommandBuffer cb, GPUKernel kernel, string name, IGPUAppendConsumeBuffer buffer, bool resetBuffer = false)
+        public static void SetAppendBuffer(this ComputeProgram cs, CommandBuffer cb, ComputeKernel kernel, string name, IAppendConsumeBuffer buffer, bool resetBuffer = false)
         {
             if (resetBuffer) buffer.ResetCounter(cb);
             cs.SetBuffer(cb, kernel, name, buffer.Data);
         }
-        public static void SetGPUAppendBuffer(this GPUKernel kernel, CommandBuffer cb, string name, IGPUAppendConsumeBuffer buffer, bool resetBuffer = false)
+        public static void SetAppendBuffer(this ComputeKernel kernel, CommandBuffer cb, string name, IAppendConsumeBuffer buffer, bool resetBuffer = false)
         {
-            kernel.Cs.SetGPUAppendBuffer(cb, kernel, name, buffer, resetBuffer);
+            kernel.Program.SetAppendBuffer(cb, kernel, name, buffer, resetBuffer);
         }
 
-        public static void SetGPUAppendBuffer(this GPUComputeShader cs, IComputeCommandBuffer cb, GPUKernel kernel, string name, IGPUAppendConsumeBuffer buffer, bool resetBuffer = false)
+        public static void SetAppendBuffer(this ComputeProgram cs, IComputeCommandBuffer cb, ComputeKernel kernel, string name, IAppendConsumeBuffer buffer, bool resetBuffer = false)
         {
             if (resetBuffer) buffer.ResetCounter(cb);
             cs.SetBuffer(cb, kernel, name, buffer.Data);
         }
-        public static void SetGPUAppendBuffer(this GPUKernel kernel, IComputeCommandBuffer cb, string name, IGPUAppendConsumeBuffer buffer, bool resetBuffer = false)
+        public static void SetAppendBuffer(this ComputeKernel kernel, IComputeCommandBuffer cb, string name, IAppendConsumeBuffer buffer, bool resetBuffer = false)
         {
-            kernel.Cs.SetGPUAppendBuffer(cb, kernel, name, buffer, resetBuffer);
+            kernel.Program.SetAppendBuffer(cb, kernel, name, buffer, resetBuffer);
         }
 
-        public static void SetGPUConsumeBuffer(this GPUComputeShader cs, GPUKernel kernel, string name, IGPUAppendConsumeBuffer buffer)
+        public static void SetConsumeBuffer(this ComputeProgram cs, ComputeKernel kernel, string name, IAppendConsumeBuffer buffer)
         {
-            var propertyIDs = cs.GetPropertyIDs(name, GPUStatics.AppendConsumeBufferConcatNames);
+            var propertyIDs = cs.GetPropertyIDs(name, ComputeShaderUtility.AppendConsumeBufferConcatNames);
             int count = 0;
             buffer.UpdateCountBuffer();
             cs.SetBuffer(kernel, propertyIDs[count++], buffer.Data);
             cs.SetBuffer(kernel, propertyIDs[count++], buffer.CountBuffer);
         }
-        public static void SetGPUConsumeBuffer(this GPUKernel kernel, string name, IGPUAppendConsumeBuffer buffer)
+        public static void SetConsumeBuffer(this ComputeKernel kernel, string name, IAppendConsumeBuffer buffer)
         {
-            kernel.Cs.SetGPUConsumeBuffer(kernel, name, buffer);
+            kernel.Program.SetConsumeBuffer(kernel, name, buffer);
         }
 
-        public static void SetGPUConsumeBuffer(this GPUComputeShader cs, CommandBuffer cb, GPUKernel kernel, string name, IGPUAppendConsumeBuffer buffer)
+        public static void SetConsumeBuffer(this ComputeProgram cs, CommandBuffer cb, ComputeKernel kernel, string name, IAppendConsumeBuffer buffer)
         {
-            var propertyIDs = cs.GetPropertyIDs(name, GPUStatics.AppendConsumeBufferConcatNames);
+            var propertyIDs = cs.GetPropertyIDs(name, ComputeShaderUtility.AppendConsumeBufferConcatNames);
             int count = 0;
             buffer.UpdateCountBuffer(cb);
             cs.SetBuffer(cb, kernel, propertyIDs[count++], buffer.Data);
             cs.SetBuffer(cb, kernel, propertyIDs[count++], buffer.CountBuffer);
         }
-        public static void SetGPUConsumeBuffer<T>(this GPUKernel kernel, CommandBuffer cb, string name, IGPUAppendConsumeBuffer buffer) where T : struct
+        public static void SetConsumeBuffer<T>(this ComputeKernel kernel, CommandBuffer cb, string name, IAppendConsumeBuffer buffer) where T : struct
         {
-            kernel.Cs.SetGPUConsumeBuffer(cb, kernel, name, buffer);
+            kernel.Program.SetConsumeBuffer(cb, kernel, name, buffer);
         }
 
-        public static void SetGPUConsumeBuffer(this GPUComputeShader cs, IComputeCommandBuffer cb, GPUKernel kernel, string name, IGPUAppendConsumeBuffer buffer)
+        public static void SetConsumeBuffer(this ComputeProgram cs, IComputeCommandBuffer cb, ComputeKernel kernel, string name, IAppendConsumeBuffer buffer)
         {
-            var propertyIDs = cs.GetPropertyIDs(name, GPUStatics.AppendConsumeBufferConcatNames);
+            var propertyIDs = cs.GetPropertyIDs(name, ComputeShaderUtility.AppendConsumeBufferConcatNames);
             int count = 0;
             buffer.UpdateCountBuffer(cb);
             cs.SetBuffer(cb, kernel, propertyIDs[count++], buffer.Data);
             cs.SetBuffer(cb, kernel, propertyIDs[count++], buffer.CountBuffer);
         }
-        public static void SetGPUConsumeBuffer<T>(this GPUKernel kernel, IComputeCommandBuffer cb, string name, IGPUAppendConsumeBuffer buffer) where T : struct
+        public static void SetConsumeBuffer<T>(this ComputeKernel kernel, IComputeCommandBuffer cb, string name, IAppendConsumeBuffer buffer) where T : struct
         {
-            kernel.Cs.SetGPUConsumeBuffer(cb, kernel, name, buffer);
+            kernel.Program.SetConsumeBuffer(cb, kernel, name, buffer);
         }
     }
 }

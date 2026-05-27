@@ -1,7 +1,7 @@
-﻿#ifndef GPU_TOOLS_BUFFER_UTILS_HLSL
-#define GPU_TOOLS_BUFFER_UTILS_HLSL
+#ifndef ABECOMBE_BUFFER_UTILS_HLSL
+#define ABECOMBE_BUFFER_UTILS_HLSL
 
-// GPUStructuredBuffer
+// StructuredBuffer
 #define STRUCTURED_BUFFER_DATA_CONSTANT(BUFFER)\
 int BUFFER##Length;\
 int3 BUFFER##Size;\
@@ -105,7 +105,7 @@ BUFFER[ID]\
 #define BUFFER_POINTER_WITH_INDEX(BUFFER, INDEX)\
 BUFFER[INDEX_TO_ID(BUFFER, INDEX)]\
 
-// GPUIndirectArgumentsBuffer
+// IndirectArgumentsBuffer
 #define ARGS_BUFFER_DATA_CONSTANT(BUFFER)\
 int BUFFER##CountBufferOffset;\
 int BUFFER##CountBufferSize;\
@@ -157,7 +157,7 @@ GetArgsBufferCount##BUFFER()\
 #define SET_ARGS_BUFFER_COUNT(BUFFER, VALUE)\
 SetArgsBufferCount##BUFFER(VALUE);\
 
-// GPUAppendConsumeBuffer
+// AppendConsumeBuffer
 #define APPEND_BUFFER(TYPE, BUFFER)\
 AppendStructuredBuffer<TYPE> BUFFER;\
 
@@ -174,7 +174,7 @@ BUFFER.Consume()\
 #define BUFFER_STACK_COUNT(BUFFER)\
 BUFFER##CountBuffer[0]\
 
-// GPUCounterBuffer
+// CounterBuffer
 #define COUNTER_BUFFER(BUFFER)\
 RWStructuredBuffer<uint> BUFFER;\
 
@@ -187,9 +187,9 @@ BUFFER.IncrementCounter()\
 #define DECREMENT_COUNTER(BUFFER)\
 BUFFER.DecrementCounter()\
 
-// GPUConstantBuffer
+// ShaderConstantBuffer
 #define CONSTANT_BUFFER(TYPE, BUFFER)\
 ConstantBuffer<TYPE> BUFFER;\
 
 
-#endif /* GPU_TOOLS_BUFFER_UTILS_HLSL */
+#endif /* ABECOMBE_BUFFER_UTILS_HLSL */

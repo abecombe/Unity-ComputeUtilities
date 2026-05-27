@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Abecombe.GpuTools
 {
-    public interface IGPUStructuredBuffer : IGPUBuffer
+    public interface IStructuredBuffer : IGraphicsBuffer
     {
         public int3 Size { get; }
         public int3 StartIndex { get; }
@@ -24,12 +24,12 @@ namespace Abecombe.GpuTools
         public void SetPositionOffset(float2 offset);
         public void SetPositionOffset(float3 offset);
     }
-    public interface IGPUDoubleStructuredBuffer : IDisposable
+    public interface IPingPongStructuredBuffer : IDisposable
     {
-        public IGPUStructuredBuffer Read { get; }
-        public IGPUStructuredBuffer Write { get; }
-        public IGPUStructuredBuffer SimulationBuffer { get; }
-        public IGPUStructuredBuffer RenderingBuffer { get; }
+        public IStructuredBuffer Read { get; }
+        public IStructuredBuffer Write { get; }
+        public IStructuredBuffer SimulationBuffer { get; }
+        public IStructuredBuffer RenderingBuffer { get; }
 
         public int Length { get; }
         public int Stride { get; }
@@ -60,7 +60,7 @@ namespace Abecombe.GpuTools
         public void CopyFromReadToWrite(IComputeCommandBuffer cb);
     }
 
-    public class GPUStructuredBuffer<T> : GPUBufferBase<T>, IGPUStructuredBuffer
+    public class StructuredBuffer<T> : GraphicsBufferBase<T>, IStructuredBuffer
         where T : struct
     {
         public override GraphicsBuffer.Target BufferTarget => GraphicsBuffer.Target.Structured | GraphicsBuffer.Target.Raw;
@@ -83,7 +83,7 @@ namespace Abecombe.GpuTools
         {
             Dispose();
             Size = size;
-            InitBufferCs();
+            InitBufferProgram();
             Clear();
             SetStartIndex(int3.zero);
             SetPositionOffset(new float3(0.5f, 0.5f, 0.5f));
@@ -117,17 +117,17 @@ namespace Abecombe.GpuTools
         }
     }
 
-    public class GPUDoubleStructuredBuffer<T> : IGPUDoubleStructuredBuffer
+    public class PingPongStructuredBuffer<T> : IPingPongStructuredBuffer
         where T : struct
     {
-        public GPUStructuredBuffer<T> Buffer1 { get; protected set; } = new();
-        public GPUStructuredBuffer<T> Buffer2 { get; protected set; } = new();
+        public StructuredBuffer<T> Buffer1 { get; protected set; } = new();
+        public StructuredBuffer<T> Buffer2 { get; protected set; } = new();
 
-        public IGPUStructuredBuffer Read => Buffer1;
-        public IGPUStructuredBuffer Write => Buffer2;
+        public IStructuredBuffer Read => Buffer1;
+        public IStructuredBuffer Write => Buffer2;
         // for AsyncCompute
-        public IGPUStructuredBuffer SimulationBuffer => GPUStatics.SimulationUseBuffer1 ? Buffer1 : Buffer2;
-        public IGPUStructuredBuffer RenderingBuffer => GPUStatics.RenderingUseBuffer1 ? Buffer1 : Buffer2;
+        public IStructuredBuffer SimulationBuffer => ComputeShaderUtility.SimulationUseBuffer1 ? Buffer1 : Buffer2;
+        public IStructuredBuffer RenderingBuffer => ComputeShaderUtility.RenderingUseBuffer1 ? Buffer1 : Buffer2;
 
         public int Length => Read.Length;
         public int Stride => Read.Stride;
@@ -212,11 +212,11 @@ namespace Abecombe.GpuTools
         }
     }
 
-    public static class GPUStructuredBufferExtensions
+    public static class StructuredBufferExtensions
     {
-        public static void SetGPUStructuredBuffer(this GPUComputeShader cs, GPUKernel kernel, string name, IGPUStructuredBuffer buffer)
+        public static void SetStructuredBuffer(this ComputeProgram cs, ComputeKernel kernel, string name, IStructuredBuffer buffer)
         {
-            var propertyIDs = cs.GetPropertyIDs(name, GPUStatics.StructuredBufferConcatNames);
+            var propertyIDs = cs.GetPropertyIDs(name, ComputeShaderUtility.StructuredBufferConcatNames);
             int count = 0;
             cs.SetBuffer(kernel, propertyIDs[count++], buffer.Data);
             cs.SetInt(propertyIDs[count++], buffer.Length);
@@ -227,14 +227,14 @@ namespace Abecombe.GpuTools
             cs.SetVector(propertyIDs[count++], (float3)0.5f - buffer.PositionOffset);
             cs.SetVector(propertyIDs[count++], -buffer.PositionOffset);
         }
-        public static void SetGPUStructuredBuffer(this GPUKernel kernel, string name, IGPUStructuredBuffer buffer)
+        public static void SetStructuredBuffer(this ComputeKernel kernel, string name, IStructuredBuffer buffer)
         {
-            kernel.Cs.SetGPUStructuredBuffer(kernel, name, buffer);
+            kernel.Program.SetStructuredBuffer(kernel, name, buffer);
         }
 
-        public static void SetGPUStructuredBuffer(this GPUComputeShader cs, CommandBuffer cb, GPUKernel kernel, string name, IGPUStructuredBuffer buffer)
+        public static void SetStructuredBuffer(this ComputeProgram cs, CommandBuffer cb, ComputeKernel kernel, string name, IStructuredBuffer buffer)
         {
-            var propertyIDs = cs.GetPropertyIDs(name, GPUStatics.StructuredBufferConcatNames);
+            var propertyIDs = cs.GetPropertyIDs(name, ComputeShaderUtility.StructuredBufferConcatNames);
             int count = 0;
             cs.SetBuffer(cb, kernel, propertyIDs[count++], buffer.Data);
             cs.SetInt(cb, propertyIDs[count++], buffer.Length);
@@ -245,14 +245,14 @@ namespace Abecombe.GpuTools
             cs.SetVector(cb, propertyIDs[count++], (float3)0.5f - buffer.PositionOffset);
             cs.SetVector(cb, propertyIDs[count++], -buffer.PositionOffset);
         }
-        public static void SetGPUStructuredBuffer(this GPUKernel kernel, CommandBuffer cb, string name, IGPUStructuredBuffer buffer)
+        public static void SetStructuredBuffer(this ComputeKernel kernel, CommandBuffer cb, string name, IStructuredBuffer buffer)
         {
-            kernel.Cs.SetGPUStructuredBuffer(cb, kernel, name, buffer);
+            kernel.Program.SetStructuredBuffer(cb, kernel, name, buffer);
         }
 
-        public static void SetGPUStructuredBuffer(this GPUComputeShader cs, IComputeCommandBuffer cb, GPUKernel kernel, string name, IGPUStructuredBuffer buffer)
+        public static void SetStructuredBuffer(this ComputeProgram cs, IComputeCommandBuffer cb, ComputeKernel kernel, string name, IStructuredBuffer buffer)
         {
-            var propertyIDs = cs.GetPropertyIDs(name, GPUStatics.StructuredBufferConcatNames);
+            var propertyIDs = cs.GetPropertyIDs(name, ComputeShaderUtility.StructuredBufferConcatNames);
             int count = 0;
             cs.SetBuffer(cb, kernel, propertyIDs[count++], buffer.Data);
             cs.SetInt(cb, propertyIDs[count++], buffer.Length);
@@ -263,9 +263,9 @@ namespace Abecombe.GpuTools
             cs.SetVector(cb, propertyIDs[count++], (float3)0.5f - buffer.PositionOffset);
             cs.SetVector(cb, propertyIDs[count++], -buffer.PositionOffset);
         }
-        public static void SetGPUStructuredBuffer(this GPUKernel kernel, IComputeCommandBuffer cb, string name, IGPUStructuredBuffer buffer)
+        public static void SetStructuredBuffer(this ComputeKernel kernel, IComputeCommandBuffer cb, string name, IStructuredBuffer buffer)
         {
-            kernel.Cs.SetGPUStructuredBuffer(cb, kernel, name, buffer);
+            kernel.Program.SetStructuredBuffer(cb, kernel, name, buffer);
         }
     }
 }

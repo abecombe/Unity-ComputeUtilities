@@ -1,10 +1,10 @@
-﻿using Unity.Mathematics;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Abecombe.GpuTools
 {
-    public class GPUIndirectArgumentsBuffer : GPUBufferBase<uint>
+    public class IndirectArgumentsBuffer : GraphicsBufferBase<uint>
     {
         public override GraphicsBuffer.Target BufferTarget => GraphicsBuffer.Target.IndirectArguments | GraphicsBuffer.Target.Raw;
 
@@ -12,7 +12,7 @@ namespace Abecombe.GpuTools
 
         public uint[] Args { get; protected set; }
 
-        public GPUDispatchIndirectArgsBuffer DispatchIndirectArgsBuffer { get; } = new();
+        public DispatchIndirectArgumentsBuffer DispatchIndirectArgumentsBuffer { get; } = new();
         public int CountBufferOffset { get; protected set; }
         public int CountBufferSize { get; protected set; }
 
@@ -29,11 +29,11 @@ namespace Abecombe.GpuTools
         protected void InitPrivate(int countBufferOffset, int countBufferSize)
         {
             Dispose();
-            InitBufferCs();
+            InitBufferProgram();
             SetData(Args);
             CountBufferOffset = countBufferOffset;
             CountBufferSize = math.clamp(countBufferSize, 1, 3);
-            DispatchIndirectArgsBuffer.Init(this, CountBufferOffset, CountBufferSize);
+            DispatchIndirectArgumentsBuffer.Init(this, CountBufferOffset, CountBufferSize);
             Inited = true;
         }
 
@@ -43,7 +43,7 @@ namespace Abecombe.GpuTools
             {
                 Data.Release();
                 Data = null;
-                DispatchIndirectArgsBuffer.Dispose();
+                DispatchIndirectArgumentsBuffer.Dispose();
             }
             Inited = false;
         }
@@ -196,45 +196,45 @@ namespace Abecombe.GpuTools
         }
     }
 
-    public static class GPUIndirectArgumentsBufferExtensions
+    public static class IndirectArgumentsBufferExtensions
     {
-        public static void SetGPUIndirectArgumentsBuffer(this GPUComputeShader cs, GPUKernel kernel, string name, GPUIndirectArgumentsBuffer buffer)
+        public static void SetIndirectArgumentsBuffer(this ComputeProgram cs, ComputeKernel kernel, string name, IndirectArgumentsBuffer buffer)
         {
-            var propertyIDs = cs.GetPropertyIDs(name, GPUStatics.IndirectArgumentsBufferConcatNames);
+            var propertyIDs = cs.GetPropertyIDs(name, ComputeShaderUtility.IndirectArgumentsBufferConcatNames);
             int count = 0;
             cs.SetBuffer(kernel, propertyIDs[count++], buffer);
             cs.SetInt(propertyIDs[count++], buffer.CountBufferOffset);
             cs.SetInt(propertyIDs[count++], buffer.CountBufferSize);
         }
-        public static void SetGPUIndirectArgumentsBuffer(this GPUKernel kernel, string name, GPUIndirectArgumentsBuffer buffer)
+        public static void SetIndirectArgumentsBuffer(this ComputeKernel kernel, string name, IndirectArgumentsBuffer buffer)
         {
-            kernel.Cs.SetGPUIndirectArgumentsBuffer(kernel, name, buffer);
+            kernel.Program.SetIndirectArgumentsBuffer(kernel, name, buffer);
         }
 
-        public static void SetGPUIndirectArgumentsBuffer(this GPUComputeShader cs, CommandBuffer cb, GPUKernel kernel, string name, GPUIndirectArgumentsBuffer buffer)
+        public static void SetIndirectArgumentsBuffer(this ComputeProgram cs, CommandBuffer cb, ComputeKernel kernel, string name, IndirectArgumentsBuffer buffer)
         {
-            var propertyIDs = cs.GetPropertyIDs(name, GPUStatics.IndirectArgumentsBufferConcatNames);
+            var propertyIDs = cs.GetPropertyIDs(name, ComputeShaderUtility.IndirectArgumentsBufferConcatNames);
             int count = 0;
             cs.SetBuffer(cb, kernel, propertyIDs[count++], buffer);
             cs.SetInt(cb, propertyIDs[count++], buffer.CountBufferOffset);
             cs.SetInt(cb, propertyIDs[count++], buffer.CountBufferSize);
         }
-        public static void SetGPUIndirectArgumentsBuffer(this GPUKernel kernel, CommandBuffer cb, string name, GPUIndirectArgumentsBuffer buffer)
+        public static void SetIndirectArgumentsBuffer(this ComputeKernel kernel, CommandBuffer cb, string name, IndirectArgumentsBuffer buffer)
         {
-            kernel.Cs.SetGPUIndirectArgumentsBuffer(cb, kernel, name, buffer);
+            kernel.Program.SetIndirectArgumentsBuffer(cb, kernel, name, buffer);
         }
 
-        public static void SetGPUIndirectArgumentsBuffer(this GPUComputeShader cs, IComputeCommandBuffer cb, GPUKernel kernel, string name, GPUIndirectArgumentsBuffer buffer)
+        public static void SetIndirectArgumentsBuffer(this ComputeProgram cs, IComputeCommandBuffer cb, ComputeKernel kernel, string name, IndirectArgumentsBuffer buffer)
         {
-            var propertyIDs = cs.GetPropertyIDs(name, GPUStatics.IndirectArgumentsBufferConcatNames);
+            var propertyIDs = cs.GetPropertyIDs(name, ComputeShaderUtility.IndirectArgumentsBufferConcatNames);
             int count = 0;
             cs.SetBuffer(cb, kernel, propertyIDs[count++], buffer);
             cs.SetInt(cb, propertyIDs[count++], buffer.CountBufferOffset);
             cs.SetInt(cb, propertyIDs[count++], buffer.CountBufferSize);
         }
-        public static void SetGPUIndirectArgumentsBuffer(this GPUKernel kernel, IComputeCommandBuffer cb, string name, GPUIndirectArgumentsBuffer buffer)
+        public static void SetIndirectArgumentsBuffer(this ComputeKernel kernel, IComputeCommandBuffer cb, string name, IndirectArgumentsBuffer buffer)
         {
-            kernel.Cs.SetGPUIndirectArgumentsBuffer(cb, kernel, name, buffer);
+            kernel.Program.SetIndirectArgumentsBuffer(cb, kernel, name, buffer);
         }
     }
 }

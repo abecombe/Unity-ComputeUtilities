@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
@@ -8,13 +8,13 @@ using UnityEngine.Rendering.RenderGraphModule;
 namespace Abecombe.GpuTools
 {
     [Serializable]
-    public class GPUComputeShader
+    public class ComputeProgram
     {
         [SerializeField]
         private ComputeShader _cs;
         public ComputeShader Cs => _cs;
 
-        private Dictionary<int, GPUKernel> _kernels = new();
+        private Dictionary<int, ComputeKernel> _kernels = new();
 
         private Dictionary<int, int> _propertyID = new();
         private Dictionary<int, int[]> _propertyIDs = new();
@@ -42,14 +42,14 @@ namespace Abecombe.GpuTools
             Init();
         }
 
-        public GPUKernel FindKernel(string name)
+        public ComputeKernel FindKernel(string name)
         {
             int hash = name.GetHashCode();
 
             if (_kernels.TryGetValue(hash, out var kernel))
                 return kernel;
 
-            kernel = new GPUKernel(this, name);
+            kernel = new ComputeKernel(this, name);
             _kernels.Add(hash, kernel);
             return kernel;
         }
@@ -841,7 +841,7 @@ namespace Abecombe.GpuTools
         {
             Cs.SetBuffer(kernelIndex, id, buffer);
         }
-        public void SetBuffer(GPUKernel kernel, int id, GraphicsBuffer buffer)
+        public void SetBuffer(ComputeKernel kernel, int id, GraphicsBuffer buffer)
         {
             SetBuffer(kernel.ID, id, buffer);
         }
@@ -849,7 +849,7 @@ namespace Abecombe.GpuTools
         {
             Cs.SetBuffer(kernelIndex, name, buffer);
         }
-        public void SetBuffer(GPUKernel kernel, string name, GraphicsBuffer buffer)
+        public void SetBuffer(ComputeKernel kernel, string name, GraphicsBuffer buffer)
         {
             SetBuffer(kernel.ID, name, buffer);
         }
@@ -858,7 +858,7 @@ namespace Abecombe.GpuTools
         {
             cb.SetComputeBufferParam(Cs, kernelIndex, id, buffer);
         }
-        public void SetBuffer(CommandBuffer cb, GPUKernel kernel, int id, GraphicsBuffer buffer)
+        public void SetBuffer(CommandBuffer cb, ComputeKernel kernel, int id, GraphicsBuffer buffer)
         {
             SetBuffer(cb, kernel.ID, id, buffer);
         }
@@ -866,7 +866,7 @@ namespace Abecombe.GpuTools
         {
             cb.SetComputeBufferParam(Cs, kernelIndex, name, buffer);
         }
-        public void SetBuffer(CommandBuffer cb, GPUKernel kernel, string name, GraphicsBuffer buffer)
+        public void SetBuffer(CommandBuffer cb, ComputeKernel kernel, string name, GraphicsBuffer buffer)
         {
             SetBuffer(cb, kernel.ID, name, buffer);
         }
@@ -875,7 +875,7 @@ namespace Abecombe.GpuTools
         {
             cb.SetComputeBufferParam(Cs, kernelIndex, id, buffer);
         }
-        public void SetBuffer(IComputeCommandBuffer cb, GPUKernel kernel, int id, GraphicsBuffer buffer)
+        public void SetBuffer(IComputeCommandBuffer cb, ComputeKernel kernel, int id, GraphicsBuffer buffer)
         {
             SetBuffer(cb, kernel.ID, id, buffer);
         }
@@ -883,7 +883,7 @@ namespace Abecombe.GpuTools
         {
             cb.SetComputeBufferParam(Cs, kernelIndex, name, buffer);
         }
-        public void SetBuffer(IComputeCommandBuffer cb, GPUKernel kernel, string name, GraphicsBuffer buffer)
+        public void SetBuffer(IComputeCommandBuffer cb, ComputeKernel kernel, string name, GraphicsBuffer buffer)
         {
             SetBuffer(cb, kernel.ID, name, buffer);
         }
@@ -989,7 +989,7 @@ namespace Abecombe.GpuTools
         {
             Cs.SetTexture(kernelIndex, id, tex);
         }
-        public void SetTexture(GPUKernel kernel, int id, Texture tex)
+        public void SetTexture(ComputeKernel kernel, int id, Texture tex)
         {
             SetTexture(kernel.ID, id, tex);
         }
@@ -997,7 +997,7 @@ namespace Abecombe.GpuTools
         {
             Cs.SetTexture(kernelIndex, name, tex);
         }
-        public void SetTexture(GPUKernel kernel, string name, Texture tex)
+        public void SetTexture(ComputeKernel kernel, string name, Texture tex)
         {
             SetTexture(kernel.ID, name, tex);
         }
@@ -1006,7 +1006,7 @@ namespace Abecombe.GpuTools
         {
             cb.SetComputeTextureParam(Cs, kernelIndex, id, tex);
         }
-        public void SetTexture(CommandBuffer cb, GPUKernel kernel, int id, Texture tex)
+        public void SetTexture(CommandBuffer cb, ComputeKernel kernel, int id, Texture tex)
         {
             SetTexture(cb, kernel.ID, id, tex);
         }
@@ -1014,7 +1014,7 @@ namespace Abecombe.GpuTools
         {
             cb.SetComputeTextureParam(Cs, kernelIndex, name, tex);
         }
-        public void SetTexture(CommandBuffer cb, GPUKernel kernel, string name, Texture tex)
+        public void SetTexture(CommandBuffer cb, ComputeKernel kernel, string name, Texture tex)
         {
             SetTexture(cb, kernel.ID, name, tex);
         }
@@ -1023,7 +1023,7 @@ namespace Abecombe.GpuTools
         {
             cb.SetComputeTextureParam(Cs, kernelIndex, id, tex);
         }
-        public void SetTexture(IComputeCommandBuffer cb, GPUKernel kernel, int id, TextureHandle tex)
+        public void SetTexture(IComputeCommandBuffer cb, ComputeKernel kernel, int id, TextureHandle tex)
         {
             SetTexture(cb, kernel.ID, id, tex);
         }
@@ -1031,7 +1031,7 @@ namespace Abecombe.GpuTools
         {
             cb.SetComputeTextureParam(Cs, kernelIndex, name, tex);
         }
-        public void SetTexture(IComputeCommandBuffer cb, GPUKernel kernel, string name, TextureHandle tex)
+        public void SetTexture(IComputeCommandBuffer cb, ComputeKernel kernel, string name, TextureHandle tex)
         {
             SetTexture(cb, kernel.ID, name, tex);
         }
@@ -1042,7 +1042,7 @@ namespace Abecombe.GpuTools
         {
             Cs.SetRayTracingAccelerationStructure(kernelIndex, id, rtas);
         }
-        public void SetRayTracingAccelerationStructure(GPUKernel kernel, int id, RayTracingAccelerationStructure rtas)
+        public void SetRayTracingAccelerationStructure(ComputeKernel kernel, int id, RayTracingAccelerationStructure rtas)
         {
             SetRayTracingAccelerationStructure(kernel.ID, id, rtas);
         }
@@ -1051,7 +1051,7 @@ namespace Abecombe.GpuTools
         {
             Cs.SetRayTracingAccelerationStructure(kernelIndex, name, rtas);
         }
-        public void SetRayTracingAccelerationStructure(GPUKernel kernel, string name, RayTracingAccelerationStructure rtas)
+        public void SetRayTracingAccelerationStructure(ComputeKernel kernel, string name, RayTracingAccelerationStructure rtas)
         {
             SetRayTracingAccelerationStructure(kernel.ID, name, rtas);
         }
@@ -1060,7 +1060,7 @@ namespace Abecombe.GpuTools
         {
             cb.SetRayTracingAccelerationStructure(Cs, kernelIndex, id, rtas);
         }
-        public void SetRayTracingAccelerationStructure(CommandBuffer cb, GPUKernel kernel, int id, RayTracingAccelerationStructure rtas)
+        public void SetRayTracingAccelerationStructure(CommandBuffer cb, ComputeKernel kernel, int id, RayTracingAccelerationStructure rtas)
         {
             SetRayTracingAccelerationStructure(cb, kernel.ID, id, rtas);
         }
@@ -1069,7 +1069,7 @@ namespace Abecombe.GpuTools
         {
             cb.SetRayTracingAccelerationStructure(Cs, kernelIndex, name, rtas);
         }
-        public void SetRayTracingAccelerationStructure(CommandBuffer cb, GPUKernel kernel, string name, RayTracingAccelerationStructure rtas)
+        public void SetRayTracingAccelerationStructure(CommandBuffer cb, ComputeKernel kernel, string name, RayTracingAccelerationStructure rtas)
         {
             SetRayTracingAccelerationStructure(cb, kernel.ID, name, rtas);
         }
@@ -1078,7 +1078,7 @@ namespace Abecombe.GpuTools
         {
             cb.SetRayTracingAccelerationStructure(Cs, kernelIndex, id, rtas);
         }
-        public void SetRayTracingAccelerationStructure(IComputeCommandBuffer cb, GPUKernel kernel, int id, RayTracingAccelerationStructure rtas)
+        public void SetRayTracingAccelerationStructure(IComputeCommandBuffer cb, ComputeKernel kernel, int id, RayTracingAccelerationStructure rtas)
         {
             SetRayTracingAccelerationStructure(cb, kernel.ID, id, rtas);
         }
@@ -1087,7 +1087,7 @@ namespace Abecombe.GpuTools
         {
             cb.SetRayTracingAccelerationStructure(Cs, kernelIndex, name, rtas);
         }
-        public void SetRayTracingAccelerationStructure(IComputeCommandBuffer cb, GPUKernel kernel, string name, RayTracingAccelerationStructure rtas)
+        public void SetRayTracingAccelerationStructure(IComputeCommandBuffer cb, ComputeKernel kernel, string name, RayTracingAccelerationStructure rtas)
         {
             SetRayTracingAccelerationStructure(cb, kernel.ID, name, rtas);
         }
@@ -1146,33 +1146,33 @@ namespace Abecombe.GpuTools
         #region Dispatch
         public void Dispatch(int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            EnableKeyword(GPUStatics.DirectDispatch);
-            DisableKeyword(GPUStatics.IndirectDispatch);
+            EnableKeyword(ComputeShaderUtility.DirectDispatch);
+            DisableKeyword(ComputeShaderUtility.IndirectDispatch);
             Cs.Dispatch(kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
-        public void Dispatch(GPUKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        public void Dispatch(ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
             Dispatch(kernel.ID, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
 
         public void Dispatch(CommandBuffer cb, int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            EnableKeyword(cb, GPUStatics.DirectDispatch);
-            DisableKeyword(cb, GPUStatics.IndirectDispatch);
+            EnableKeyword(cb, ComputeShaderUtility.DirectDispatch);
+            DisableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
             cb.DispatchCompute(Cs, kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
-        public void Dispatch(CommandBuffer cb, GPUKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        public void Dispatch(CommandBuffer cb, ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
             Dispatch(cb, kernel.ID, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
 
         public void Dispatch(IComputeCommandBuffer cb, int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            EnableKeyword(cb, GPUStatics.DirectDispatch);
-            DisableKeyword(cb, GPUStatics.IndirectDispatch);
+            EnableKeyword(cb, ComputeShaderUtility.DirectDispatch);
+            DisableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
             cb.DispatchCompute(Cs, kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
-        public void Dispatch(IComputeCommandBuffer cb, GPUKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        public void Dispatch(IComputeCommandBuffer cb, ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
             Dispatch(cb, kernel.ID, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
@@ -1181,33 +1181,33 @@ namespace Abecombe.GpuTools
         #region DispatchIndirect
         public void DispatchIndirect(int kernelIndex, GraphicsBuffer argsBuffer)
         {
-            DisableKeyword(GPUStatics.DirectDispatch);
-            EnableKeyword(GPUStatics.IndirectDispatch);
+            DisableKeyword(ComputeShaderUtility.DirectDispatch);
+            EnableKeyword(ComputeShaderUtility.IndirectDispatch);
             Cs.DispatchIndirect(kernelIndex, argsBuffer);
         }
-        public void DispatchIndirect(GPUKernel kernel, GraphicsBuffer argsBuffer)
+        public void DispatchIndirect(ComputeKernel kernel, GraphicsBuffer argsBuffer)
         {
             DispatchIndirect(kernel.ID, argsBuffer);
         }
 
         public void DispatchIndirect(CommandBuffer cb, int kernelIndex, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
-            DisableKeyword(cb, GPUStatics.DirectDispatch);
-            EnableKeyword(cb, GPUStatics.IndirectDispatch);
+            DisableKeyword(cb, ComputeShaderUtility.DirectDispatch);
+            EnableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
             cb.DispatchCompute(Cs, kernelIndex, argsBuffer, argsOffset);
         }
-        public void DispatchIndirect(CommandBuffer cb, GPUKernel kernel, GraphicsBuffer argsBuffer, uint argsOffset = 0)
+        public void DispatchIndirect(CommandBuffer cb, ComputeKernel kernel, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
             DispatchIndirect(cb, kernel.ID, argsBuffer, argsOffset);
         }
 
         public void DispatchIndirect(IComputeCommandBuffer cb, int kernelIndex, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
-            DisableKeyword(cb, GPUStatics.DirectDispatch);
-            EnableKeyword(cb, GPUStatics.IndirectDispatch);
+            DisableKeyword(cb, ComputeShaderUtility.DirectDispatch);
+            EnableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
             cb.DispatchCompute(Cs, kernelIndex, argsBuffer, argsOffset);
         }
-        public void DispatchIndirect(IComputeCommandBuffer cb, GPUKernel kernel, GraphicsBuffer argsBuffer, uint argsOffset = 0)
+        public void DispatchIndirect(IComputeCommandBuffer cb, ComputeKernel kernel, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
             DispatchIndirect(cb, kernel.ID, argsBuffer, argsOffset);
         }

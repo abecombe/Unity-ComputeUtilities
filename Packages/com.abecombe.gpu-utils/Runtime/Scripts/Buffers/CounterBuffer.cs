@@ -1,20 +1,20 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Abecombe.GpuTools
 {
-    public class GPUCounterBuffer : GPUBufferBase<uint>
+    public class CounterBuffer : GraphicsBufferBase<uint>
     {
         public override GraphicsBuffer.Target BufferTarget => GraphicsBuffer.Target.Counter;
 
         public override int Length => 1;
 
-        public GPUIndirectArgumentsBuffer CountBuffer { get; } = new();
+        public IndirectArgumentsBuffer CountBuffer { get; } = new();
 
         public void Init()
         {
             Dispose();
-            InitBufferCs();
+            InitBufferProgram();
             ResetCounter();
             CountBuffer.Init(1);
             Inited = true;
@@ -35,7 +35,7 @@ namespace Abecombe.GpuTools
         {
             GraphicsBuffer.CopyCount(Data, CountBuffer, 0);
         }
-        public void CopyCountTo(GPUBufferBase<uint> dest, int destOffset = 0)
+        public void CopyCountTo(GraphicsBufferBase<uint> dest, int destOffset = 0)
         {
             GraphicsBuffer.CopyCount(Data, dest, destOffset * dest.Stride);
         }
@@ -43,7 +43,7 @@ namespace Abecombe.GpuTools
         {
             cb.CopyCounterValue(Data, CountBuffer, 0);
         }
-        public void CopyCountTo(CommandBuffer cb, GPUBufferBase<uint> dest, int destOffset = 0)
+        public void CopyCountTo(CommandBuffer cb, GraphicsBufferBase<uint> dest, int destOffset = 0)
         {
             cb.CopyCounterValue(Data, dest, (uint)(destOffset * dest.Stride));
         }
@@ -51,7 +51,7 @@ namespace Abecombe.GpuTools
         {
             cb.CopyCounterValue(Data, CountBuffer, 0);
         }
-        public void CopyCountTo(IComputeCommandBuffer cb, GPUBufferBase<uint> dest, int destOffset = 0)
+        public void CopyCountTo(IComputeCommandBuffer cb, GraphicsBufferBase<uint> dest, int destOffset = 0)
         {
             cb.CopyCounterValue(Data, dest, (uint)(destOffset * dest.Stride));
         }
@@ -90,66 +90,66 @@ namespace Abecombe.GpuTools
         }
     }
 
-    public static class GPUCounterBufferExtensions
+    public static class CounterBufferExtensions
     {
-        public static void SetGPUCounterBuffer(this GPUComputeShader cs, GPUKernel kernel, string name, GPUCounterBuffer buffer, bool resetCounter = false)
+        public static void SetCounterBuffer(this ComputeProgram cs, ComputeKernel kernel, string name, CounterBuffer buffer, bool resetCounter = false)
         {
             if (resetCounter) buffer.ResetCounter();
             cs.SetBuffer(kernel, name, buffer.Data);
         }
-        public static void SetGPUCounterBuffer(this GPUKernel kernel, string name, GPUCounterBuffer buffer, bool resetCounter = false)
+        public static void SetCounterBuffer(this ComputeKernel kernel, string name, CounterBuffer buffer, bool resetCounter = false)
         {
-            kernel.Cs.SetGPUCounterBuffer(kernel, name, buffer, resetCounter);
+            kernel.Program.SetCounterBuffer(kernel, name, buffer, resetCounter);
         }
 
-        public static void SetGPUCounterCountBuffer(this GPUComputeShader cs, GPUKernel kernel, string name, GPUCounterBuffer buffer)
+        public static void SetCounterCountBuffer(this ComputeProgram cs, ComputeKernel kernel, string name, CounterBuffer buffer)
         {
             buffer.UpdateCountBuffer();
             cs.SetBuffer(kernel, name, buffer.CountBuffer);
         }
-        public static void SetGPUCounterCountBuffer(this GPUKernel kernel, string name, GPUCounterBuffer buffer)
+        public static void SetCounterCountBuffer(this ComputeKernel kernel, string name, CounterBuffer buffer)
         {
-            kernel.Cs.SetGPUCounterCountBuffer(kernel, name, buffer);
+            kernel.Program.SetCounterCountBuffer(kernel, name, buffer);
         }
 
-        public static void SetGPUCounterBuffer(this GPUComputeShader cs, CommandBuffer cb, GPUKernel kernel, string name, GPUCounterBuffer buffer, bool resetCounter = false)
+        public static void SetCounterBuffer(this ComputeProgram cs, CommandBuffer cb, ComputeKernel kernel, string name, CounterBuffer buffer, bool resetCounter = false)
         {
             if (resetCounter) buffer.ResetCounter(cb);
             cs.SetBuffer(cb, kernel, name, buffer.Data);
         }
-        public static void SetGPUCounterBuffer(this GPUKernel kernel, CommandBuffer cb, string name, GPUCounterBuffer buffer, bool resetCounter = false)
+        public static void SetCounterBuffer(this ComputeKernel kernel, CommandBuffer cb, string name, CounterBuffer buffer, bool resetCounter = false)
         {
-            kernel.Cs.SetGPUCounterBuffer(cb, kernel, name, buffer, resetCounter);
+            kernel.Program.SetCounterBuffer(cb, kernel, name, buffer, resetCounter);
         }
 
-        public static void SetGPUCounterCountBuffer(this GPUComputeShader cs, CommandBuffer cb, GPUKernel kernel, string name, GPUCounterBuffer buffer)
+        public static void SetCounterCountBuffer(this ComputeProgram cs, CommandBuffer cb, ComputeKernel kernel, string name, CounterBuffer buffer)
         {
             buffer.UpdateCountBuffer(cb);
             cs.SetBuffer(cb, kernel, name, buffer.CountBuffer);
         }
-        public static void SetGPUCounterCountBuffer(this GPUKernel kernel, CommandBuffer cb, string name, GPUCounterBuffer buffer)
+        public static void SetCounterCountBuffer(this ComputeKernel kernel, CommandBuffer cb, string name, CounterBuffer buffer)
         {
-            kernel.Cs.SetGPUCounterCountBuffer(cb, kernel, name, buffer);
+            kernel.Program.SetCounterCountBuffer(cb, kernel, name, buffer);
         }
 
-        public static void SetGPUCounterBuffer(this GPUComputeShader cs, IComputeCommandBuffer cb, GPUKernel kernel, string name, GPUCounterBuffer buffer, bool resetCounter = false)
+        public static void SetCounterBuffer(this ComputeProgram cs, IComputeCommandBuffer cb, ComputeKernel kernel, string name, CounterBuffer buffer, bool resetCounter = false)
         {
             if (resetCounter) buffer.ResetCounter(cb);
             cs.SetBuffer(cb, kernel, name, buffer.Data);
         }
-        public static void SetGPUCounterBuffer(this GPUKernel kernel, IComputeCommandBuffer cb, string name, GPUCounterBuffer buffer, bool resetCounter = false)
+        public static void SetCounterBuffer(this ComputeKernel kernel, IComputeCommandBuffer cb, string name, CounterBuffer buffer, bool resetCounter = false)
         {
-            kernel.Cs.SetGPUCounterBuffer(cb, kernel, name, buffer, resetCounter);
+            kernel.Program.SetCounterBuffer(cb, kernel, name, buffer, resetCounter);
         }
 
-        public static void SetGPUCounterCountBuffer(this GPUComputeShader cs, IComputeCommandBuffer cb, GPUKernel kernel, string name, GPUCounterBuffer buffer)
+        public static void SetCounterCountBuffer(this ComputeProgram cs, IComputeCommandBuffer cb, ComputeKernel kernel, string name, CounterBuffer buffer)
         {
             buffer.UpdateCountBuffer(cb);
             cs.SetBuffer(cb, kernel, name, buffer.CountBuffer);
         }
-        public static void SetGPUCounterCountBuffer(this GPUKernel kernel, IComputeCommandBuffer cb, string name, GPUCounterBuffer buffer)
+        public static void SetCounterCountBuffer(this ComputeKernel kernel, IComputeCommandBuffer cb, string name, CounterBuffer buffer)
         {
-            kernel.Cs.SetGPUCounterCountBuffer(cb, kernel, name, buffer);
+            kernel.Program.SetCounterCountBuffer(cb, kernel, name, buffer);
         }
     }
 }

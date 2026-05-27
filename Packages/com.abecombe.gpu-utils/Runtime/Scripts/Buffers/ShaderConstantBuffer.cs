@@ -1,10 +1,10 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Abecombe.GpuTools
 {
     // You should layout the struct correctly to match the hlsl constant buffer layout.
     // See https://maraneshi.github.io/HLSL-ConstantBufferLayoutVisualizer/
-    public class GPUConstantBuffer<T> : GPUBufferBase<T>
+    public class ShaderConstantBuffer<T> : GraphicsBufferBase<T>
         where T : struct
     {
         public override GraphicsBuffer.Target BufferTarget => GraphicsBuffer.Target.Constant;
@@ -14,7 +14,7 @@ namespace Abecombe.GpuTools
         public void Init()
         {
             Dispose();
-            InitBufferCs();
+            InitBufferProgram();
             Inited = true;
         }
 
