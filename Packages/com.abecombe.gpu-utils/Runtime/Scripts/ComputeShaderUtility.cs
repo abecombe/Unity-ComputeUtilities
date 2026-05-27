@@ -23,7 +23,8 @@ namespace Abecombe.GpuTools
         internal static readonly int DispatchThreadSizeShaderPropertyID = Shader.PropertyToID("_DispatchThreadSize");
 
         // for GraphicsBufferBase
-        internal const string GpuToolsComputeConfigPath = "GpuTools/GpuTools";
+        internal const string ComputeShaderConfigPath = "GpuTools/ComputeShaderConfig";
+        internal const string UtilityShaderResourcePath = "GpuTools/ComputeUtilities";
         internal const string CopyBuffer1KernelName = "CopyBuffer1";
         internal const string CopyBuffer32KernelName = "CopyBuffer32";
         internal const string CopyBuffer128KernelName = "CopyBuffer128";
@@ -57,6 +58,20 @@ namespace Abecombe.GpuTools
 
         // for AppendConsumeBuffer
         internal static readonly string[] AppendConsumeBufferConcatNames = { "", "CountBuffer" };
+
+        internal static ComputeShader LoadUtilityShader()
+        {
+            var config = Resources.Load<ComputeShaderConfig>(ComputeShaderConfigPath);
+            if (config != null && config.UtilityShader != null)
+                return config.UtilityShader;
+
+            var shader = Resources.Load<ComputeShader>(UtilityShaderResourcePath);
+            if (shader == null)
+            {
+                Debug.LogError($"Could not load utility compute shader. Expected a ComputeShaderConfig at Resources/{ComputeShaderConfigPath} or a ComputeShader at Resources/{UtilityShaderResourcePath}.");
+            }
+            return shader;
+        }
 
         /// This method must be called inside an `unsafe` block.
         ///

@@ -9,7 +9,7 @@ namespace Abecombe.GpuTools
     {
         public ComputeProgram Program { get; }
         public string Name { get; }
-        public int ID { get; }
+        public int Index { get; }
         public uint3 ThreadGroupSizes;
         public uint ThreadGroupSizeX => ThreadGroupSizes.x;
         public uint ThreadGroupSizeY => ThreadGroupSizes.y;
@@ -19,8 +19,8 @@ namespace Abecombe.GpuTools
         {
             Program = program;
             Name = name;
-            ID = program.Cs.FindKernel(name);
-            program.Cs.GetKernelThreadGroupSizes(ID, out var threadGroupSizeX, out var threadGroupSizeY, out var threadGroupSizeZ);
+            Index = program.Shader.FindKernel(name);
+            program.Shader.GetKernelThreadGroupSizes(Index, out var threadGroupSizeX, out var threadGroupSizeY, out var threadGroupSizeZ);
             ThreadGroupSizes = new uint3(threadGroupSizeX, threadGroupSizeY, threadGroupSizeZ);
         }
 

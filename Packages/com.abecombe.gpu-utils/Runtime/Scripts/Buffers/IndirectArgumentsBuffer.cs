@@ -34,18 +34,17 @@ namespace Abecombe.GpuTools
             CountBufferOffset = countBufferOffset;
             CountBufferSize = math.clamp(countBufferSize, 1, 3);
             DispatchIndirectArgumentsBuffer.Init(this, CountBufferOffset, CountBufferSize);
-            Inited = true;
+            IsInitialized = true;
         }
 
         public override void Dispose()
         {
-            if (Inited)
+            if (IsInitialized)
             {
-                Data.Release();
-                Data = null;
+                ReleaseBufferResources();
                 DispatchIndirectArgumentsBuffer.Dispose();
             }
-            Inited = false;
+            IsInitialized = false;
         }
 
         public void SetDataFromArgs()

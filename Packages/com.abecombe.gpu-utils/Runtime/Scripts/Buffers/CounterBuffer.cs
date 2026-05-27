@@ -17,18 +17,17 @@ namespace Abecombe.GpuTools
             InitBufferProgram();
             ResetCounter();
             CountBuffer.Init(1);
-            Inited = true;
+            IsInitialized = true;
         }
 
         public override void Dispose()
         {
-            if (Inited)
+            if (IsInitialized)
             {
-                Data.Release();
-                Data = null;
+                ReleaseBufferResources();
                 CountBuffer.Dispose();
             }
-            Inited = false;
+            IsInitialized = false;
         }
 
         public void UpdateCountBuffer()

@@ -34,7 +34,7 @@ namespace Abecombe.GpuTools
             CountBuffer = countBuffer;
             CountBufferOffset = countBufferOffset;
             CountBufferSize = math.clamp(countBufferSize, 1, 3);
-            Inited = true;
+            IsInitialized = true;
         }
 
         public void UpdateBuffer(uint3 threadGroupSize)
@@ -82,14 +82,13 @@ namespace Abecombe.GpuTools
 
         public override void Dispose()
         {
-            if (Inited)
+            if (IsInitialized)
             {
-                Data.Release();
-                Data = null;
+                ReleaseBufferResources();
                 DispatchThreadSizeBuffer.Release();
                 DispatchThreadSizeBuffer = null;
             }
-            Inited = false;
+            IsInitialized = false;
         }
     }
 

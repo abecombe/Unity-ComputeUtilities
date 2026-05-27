@@ -39,7 +39,7 @@ namespace Abecombe.GpuTools
         public int3 EndIndex { get; }
         public float3 PositionOffset { get; }
 
-        public bool Inited { get; }
+        public bool IsInitialized { get; }
 
         public void Init(int size);
         public void Init(int2 size);
@@ -87,7 +87,7 @@ namespace Abecombe.GpuTools
             Clear();
             SetStartIndex(int3.zero);
             SetPositionOffset(new float3(0.5f, 0.5f, 0.5f));
-            Inited = true;
+            IsInitialized = true;
         }
 
         public void SetStartIndex(int startIndex)
@@ -137,7 +137,7 @@ namespace Abecombe.GpuTools
         public int3 EndIndex => Read.EndIndex;
         public float3 PositionOffset => Read.PositionOffset;
 
-        public bool Inited { get; private set; } = false;
+        public bool IsInitialized { get; private set; } = false;
 
         public void Init(int size)
         {
@@ -152,17 +152,17 @@ namespace Abecombe.GpuTools
             Dispose();
             Buffer1.Init(size);
             Buffer2.Init(size);
-            Inited = true;
+            IsInitialized = true;
         }
 
         public void Dispose()
         {
-            if (Inited)
+            if (IsInitialized)
             {
                 Buffer1.Dispose();
                 Buffer2.Dispose();
             }
-            Inited = false;
+            IsInitialized = false;
         }
 
         public void SetStartIndex(int startIndex)

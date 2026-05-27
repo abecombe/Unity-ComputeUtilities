@@ -8,9 +8,9 @@ namespace Abecombe.GpuTools
     /// <remarks>
     /// This class holds references to the compute shaders used in the GpuTools Package.
     /// </remarks>
-    [CreateAssetMenu(fileName = "GpuToolsComputeConfig", menuName = "GpuTools/ComputeConfig")]
-    public class GpuToolsComputeConfig : ScriptableObject
+    [CreateAssetMenu(fileName = "ComputeShaderConfig", menuName = "GpuTools/ComputeConfig")]
+    public class ComputeShaderConfig : ScriptableObject
     {
-        public ComputeShader GpuToolsCs;
+        public ComputeShader UtilityShader;
     }
 }

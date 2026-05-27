@@ -15,17 +15,16 @@ namespace Abecombe.GpuTools
         {
             Dispose();
             InitBufferProgram();
-            Inited = true;
+            IsInitialized = true;
         }
 
         public override void Dispose()
         {
-            if (Inited)
+            if (IsInitialized)
             {
-                Data.Release();
-                Data = null;
+                ReleaseBufferResources();
             }
-            Inited = false;
+            IsInitialized = false;
         }
     }
 }

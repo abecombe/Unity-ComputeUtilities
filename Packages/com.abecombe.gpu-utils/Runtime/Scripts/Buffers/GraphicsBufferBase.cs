@@ -17,7 +17,7 @@ namespace Abecombe.GpuTools
         public int Stride { get; }
         public int Bytes { get; }
 
-        public bool Inited { get; }
+        public bool IsInitialized { get; }
 
         public void SetData<U>(U[] data) where U : struct;
         public void SetData<U>(U[] data, int managedBufferStartIndex, int graphicsBufferStartIndex, int count) where U : struct;
@@ -63,25 +63,37 @@ namespace Abecombe.GpuTools
         public int Bytes => Length * Stride;
 
         protected ComputeProgram _utilityProgram = new();
+        private ComputeShader _utilityShaderInstance;
 
-        public bool Inited { get; protected set; } = false;
+        public bool IsInitialized { get; protected set; } = false;
 
         protected void InitBufferProgram()
         {
             Data = new GraphicsBuffer(BufferTarget, Length, Marshal.SizeOf(typeof(T)));
-            var gpuToolsComputeConfig = Resources.Load<GpuToolsComputeConfig>(ComputeShaderUtility.GpuToolsComputeConfigPath);
-            var gpuToolsCs = Object.Instantiate(gpuToolsComputeConfig.GpuToolsCs);
-            _utilityProgram.Init(gpuToolsCs);
+            var utilityShader = ComputeShaderUtility.LoadUtilityShader();
+            _utilityShaderInstance = utilityShader == null ? null : Object.Instantiate(utilityShader);
+            _utilityProgram.Init(_utilityShaderInstance);
+        }
+
+        protected void ReleaseBufferResources()
+        {
+            Data?.Release();
+            Data = null;
+
+            if (_utilityShaderInstance != null)
+            {
+                Object.Destroy(_utilityShaderInstance);
+                _utilityShaderInstance = null;
+            }
         }
 
         public virtual void Dispose()
         {
-            if (Inited)
+            if (IsInitialized)
             {
-                Data.Release();
-                Data = null;
+                ReleaseBufferResources();
             }
-            Inited = false;
+            IsInitialized = false;
         }
 
         public void SetData<U>(U[] data) where U : struct

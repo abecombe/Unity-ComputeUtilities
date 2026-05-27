@@ -11,161 +11,157 @@ namespace Abecombe.GpuTools
     public class ComputeProgram
     {
         [SerializeField]
-        private ComputeShader _cs;
-        public ComputeShader Cs => _cs;
+        private ComputeShader _shader;
+        public ComputeShader Shader => _shader;
 
-        private Dictionary<int, ComputeKernel> _kernels = new();
+        private Dictionary<string, ComputeKernel> _kernels = new();
 
-        private Dictionary<int, int> _propertyID = new();
-        private Dictionary<int, int[]> _propertyIDs = new();
+        private Dictionary<string, int> _propertyIdByName = new();
+        private Dictionary<(string, string[]), int[]> _propertyIdsByName = new();
 
         private int[] _intArr = new int[4];
 
         public void Init()
         {
             _kernels.Clear();
-            _propertyID.Clear();
-            _propertyIDs.Clear();
-            if (_cs == null)
+            _propertyIdByName.Clear();
+            _propertyIdsByName.Clear();
+            if (_shader == null)
             {
                 Debug.LogError("Compute Shader is Null. Please set a Compute Shader to dispatch kernels.");
             }
         }
-        public void Init(ComputeShader cs)
+        public void Init(ComputeShader shader)
         {
-            _cs = cs;
+            _shader = shader;
             Init();
         }
-        public void Init(string csName)
+        public void Init(string shaderResourcePath)
         {
-            _cs = Resources.Load<ComputeShader>(csName);
+            _shader = Resources.Load<ComputeShader>(shaderResourcePath);
             Init();
         }
 
         public ComputeKernel FindKernel(string name)
         {
-            int hash = name.GetHashCode();
-
-            if (_kernels.TryGetValue(hash, out var kernel))
+            if (_kernels.TryGetValue(name, out var kernel))
                 return kernel;
 
             kernel = new ComputeKernel(this, name);
-            _kernels.Add(hash, kernel);
+            _kernels.Add(name, kernel);
             return kernel;
         }
 
         public int GetPropertyID(string name)
         {
-            int hash = name.GetHashCode();
-
-            if (_propertyID.TryGetValue(hash, out var id))
+            if (_propertyIdByName.TryGetValue(name, out var id))
                 return id;
 
-            id = Shader.PropertyToID(name);
-            _propertyID.Add(hash, id);
+            id = UnityEngine.Shader.PropertyToID(name);
+            _propertyIdByName.Add(name, id);
             return id;
         }
 
         public int[] GetPropertyIDs(string name, string[] concatNames)
         {
-            int hash = name.GetHashCode() ^ concatNames.GetHashCode();
+            var key = (name, concatNames);
 
-            if (_propertyIDs.TryGetValue(hash, out var ids))
+            if (_propertyIdsByName.TryGetValue(key, out var ids))
                 return ids;
 
             ids = new int[concatNames.Length];
             for (int i = 0; i < concatNames.Length; i++)
-                ids[i] = Shader.PropertyToID(name + concatNames[i]);
-            _propertyIDs.Add(hash, ids);
+                ids[i] = UnityEngine.Shader.PropertyToID(name + concatNames[i]);
+            _propertyIdsByName.Add(key, ids);
             return ids;
         }
 
         #region SetBool
         public void SetBool(int id, bool value)
         {
-            Cs.SetBool(id, value);
+            Shader.SetBool(id, value);
         }
         public void SetBool(string name, bool value)
         {
-            Cs.SetBool(name, value);
+            Shader.SetBool(name, value);
         }
 
         public void SetBool(CommandBuffer cb, int id, bool value)
         {
-            cb.SetComputeIntParam(Cs, id, value ? 1 : 0);
+            cb.SetComputeIntParam(Shader, id, value ? 1 : 0);
         }
         public void SetBool(CommandBuffer cb, string name, bool value)
         {
-            cb.SetComputeIntParam(Cs, name, value ? 1 : 0);
+            cb.SetComputeIntParam(Shader, name, value ? 1 : 0);
         }
 
         public void SetBool(IComputeCommandBuffer cb, int id, bool value)
         {
-            cb.SetComputeIntParam(Cs, id, value ? 1 : 0);
+            cb.SetComputeIntParam(Shader, id, value ? 1 : 0);
         }
         public void SetBool(IComputeCommandBuffer cb, string name, bool value)
         {
-            cb.SetComputeIntParam(Cs, name, value ? 1 : 0);
+            cb.SetComputeIntParam(Shader, name, value ? 1 : 0);
         }
         #endregion
 
         #region SetInt
         public void SetInt(int id, int value)
         {
-            Cs.SetInt(id, value);
+            Shader.SetInt(id, value);
         }
         public void SetInt(int id, uint value)
         {
-            Cs.SetInt(id, (int)value);
+            Shader.SetInt(id, (int)value);
         }
         public void SetInt(string name, int value)
         {
-            Cs.SetInt(name, value);
+            Shader.SetInt(name, value);
         }
         public void SetInt(string name, uint value)
         {
-            Cs.SetInt(name, (int)value);
+            Shader.SetInt(name, (int)value);
         }
 
         public void SetInt(CommandBuffer cb, int id, int value)
         {
-            cb.SetComputeIntParam(Cs, id, value);
+            cb.SetComputeIntParam(Shader, id, value);
         }
         public void SetInt(CommandBuffer cb, int id, uint value)
         {
-            cb.SetComputeIntParam(Cs, id, (int)value);
+            cb.SetComputeIntParam(Shader, id, (int)value);
         }
         public void SetInt(CommandBuffer cb, string name, int value)
         {
-            cb.SetComputeIntParam(Cs, name, value);
+            cb.SetComputeIntParam(Shader, name, value);
         }
         public void SetInt(CommandBuffer cb, string name, uint value)
         {
-            cb.SetComputeIntParam(Cs, name, (int)value);
+            cb.SetComputeIntParam(Shader, name, (int)value);
         }
 
         public void SetInt(IComputeCommandBuffer cb, int id, int value)
         {
-            cb.SetComputeIntParam(Cs, id, value);
+            cb.SetComputeIntParam(Shader, id, value);
         }
         public void SetInt(IComputeCommandBuffer cb, int id, uint value)
         {
-            cb.SetComputeIntParam(Cs, id, (int)value);
+            cb.SetComputeIntParam(Shader, id, (int)value);
         }
         public void SetInt(IComputeCommandBuffer cb, string name, int value)
         {
-            cb.SetComputeIntParam(Cs, name, value);
+            cb.SetComputeIntParam(Shader, name, value);
         }
         public void SetInt(IComputeCommandBuffer cb, string name, uint value)
         {
-            cb.SetComputeIntParam(Cs, name, (int)value);
+            cb.SetComputeIntParam(Shader, name, (int)value);
         }
         #endregion
 
         #region SetInts
         private void SetInts(int id)
         {
-            Cs.SetInts(id, _intArr);
+            Shader.SetInts(id, _intArr);
         }
         public void SetInts(int id, int x, int y)
         {
@@ -226,7 +222,7 @@ namespace Abecombe.GpuTools
         }
         private void SetInts(string name)
         {
-            Cs.SetInts(name, _intArr);
+            Shader.SetInts(name, _intArr);
         }
         public void SetInts(string name, int x, int y)
         {
@@ -288,7 +284,7 @@ namespace Abecombe.GpuTools
 
         private void SetInts(CommandBuffer cb, int id)
         {
-            cb.SetComputeIntParams(Cs, id, _intArr);
+            cb.SetComputeIntParams(Shader, id, _intArr);
         }
         public void SetInts(CommandBuffer cb, int id, int x, int y)
         {
@@ -349,7 +345,7 @@ namespace Abecombe.GpuTools
         }
         private void SetInts(CommandBuffer cb, string name)
         {
-            cb.SetComputeIntParams(Cs, name, _intArr);
+            cb.SetComputeIntParams(Shader, name, _intArr);
         }
         public void SetInts(CommandBuffer cb, string name, int x, int y)
         {
@@ -411,7 +407,7 @@ namespace Abecombe.GpuTools
 
         private void SetInts(IComputeCommandBuffer cb, int id)
         {
-            cb.SetComputeIntParams(Cs, id, _intArr);
+            cb.SetComputeIntParams(Shader, id, _intArr);
         }
         public void SetInts(IComputeCommandBuffer cb, int id, int x, int y)
         {
@@ -472,7 +468,7 @@ namespace Abecombe.GpuTools
         }
         private void SetInts(IComputeCommandBuffer cb, string name)
         {
-            cb.SetComputeIntParams(Cs, name, _intArr);
+            cb.SetComputeIntParams(Shader, name, _intArr);
         }
         public void SetInts(IComputeCommandBuffer cb, string name, int x, int y)
         {
@@ -536,356 +532,356 @@ namespace Abecombe.GpuTools
         #region SetFloat
         public void SetFloat(int id, float value)
         {
-            Cs.SetFloat(id, value);
+            Shader.SetFloat(id, value);
         }
         public void SetFloat(string name, float value)
         {
-            Cs.SetFloat(name, value);
+            Shader.SetFloat(name, value);
         }
 
         public void SetFloat(CommandBuffer cb, int id, float value)
         {
-            cb.SetComputeFloatParam(Cs, id, value);
+            cb.SetComputeFloatParam(Shader, id, value);
         }
         public void SetFloat(CommandBuffer cb, string name, float value)
         {
-            cb.SetComputeFloatParam(Cs, name, value);
+            cb.SetComputeFloatParam(Shader, name, value);
         }
 
         public void SetFloat(IComputeCommandBuffer cb, int id, float value)
         {
-            cb.SetComputeFloatParam(Cs, id, value);
+            cb.SetComputeFloatParam(Shader, id, value);
         }
         public void SetFloat(IComputeCommandBuffer cb, string name, float value)
         {
-            cb.SetComputeFloatParam(Cs, name, value);
+            cb.SetComputeFloatParam(Shader, name, value);
         }
         #endregion
 
         #region SetVector
         public void SetVector(int id, float x, float y)
         {
-            Cs.SetVector(id, new Vector4(x, y));
+            Shader.SetVector(id, new Vector4(x, y));
         }
         public void SetVector(int id, float x, float y, float z)
         {
-            Cs.SetVector(id, new Vector4(x, y, z));
+            Shader.SetVector(id, new Vector4(x, y, z));
         }
         public void SetVector(int id, float x, float y, float z, float w)
         {
-            Cs.SetVector(id, new Vector4(x, y, z, w));
+            Shader.SetVector(id, new Vector4(x, y, z, w));
         }
         public void SetVector(int id, float2 value)
         {
-            Cs.SetVector(id, new Vector4(value.x, value.y));
+            Shader.SetVector(id, new Vector4(value.x, value.y));
         }
         public void SetVector(int id, float3 value)
         {
-            Cs.SetVector(id, new Vector4(value.x, value.y, value.z));
+            Shader.SetVector(id, new Vector4(value.x, value.y, value.z));
         }
         public void SetVector(int id, float4 value)
         {
-            Cs.SetVector(id, new Vector4(value.x, value.y, value.z, value.w));
+            Shader.SetVector(id, new Vector4(value.x, value.y, value.z, value.w));
         }
         public void SetVector(int id, Vector2 value)
         {
-            Cs.SetVector(id, value);
+            Shader.SetVector(id, value);
         }
         public void SetVector(int id, Vector3 value)
         {
-            Cs.SetVector(id, value);
+            Shader.SetVector(id, value);
         }
         public void SetVector(int id, Vector4 value)
         {
-            Cs.SetVector(id, value);
+            Shader.SetVector(id, value);
         }
         public void SetVector(string name, float x, float y)
         {
-            Cs.SetVector(name, new Vector4(x, y));
+            Shader.SetVector(name, new Vector4(x, y));
         }
         public void SetVector(string name, float x, float y, float z)
         {
-            Cs.SetVector(name, new Vector4(x, y, z));
+            Shader.SetVector(name, new Vector4(x, y, z));
         }
         public void SetVector(string name, float x, float y, float z, float w)
         {
-            Cs.SetVector(name, new Vector4(x, y, z, w));
+            Shader.SetVector(name, new Vector4(x, y, z, w));
         }
         public void SetVector(string name, float2 value)
         {
-            Cs.SetVector(name, new Vector4(value.x, value.y));
+            Shader.SetVector(name, new Vector4(value.x, value.y));
         }
         public void SetVector(string name, float3 value)
         {
-            Cs.SetVector(name, new Vector4(value.x, value.y, value.z));
+            Shader.SetVector(name, new Vector4(value.x, value.y, value.z));
         }
         public void SetVector(string name, float4 value)
         {
-            Cs.SetVector(name, new Vector4(value.x, value.y, value.z, value.w));
+            Shader.SetVector(name, new Vector4(value.x, value.y, value.z, value.w));
         }
         public void SetVector(string name, Vector2 value)
         {
-            Cs.SetVector(name, value);
+            Shader.SetVector(name, value);
         }
         public void SetVector(string name, Vector3 value)
         {
-            Cs.SetVector(name, value);
+            Shader.SetVector(name, value);
         }
         public void SetVector(string name, Vector4 value)
         {
-            Cs.SetVector(name, value);
+            Shader.SetVector(name, value);
         }
 
         public void SetVector(CommandBuffer cb, int id, float x, float y)
         {
-            cb.SetComputeVectorParam(Cs, id, new Vector4(x, y));
+            cb.SetComputeVectorParam(Shader, id, new Vector4(x, y));
         }
         public void SetVector(CommandBuffer cb, int id, float x, float y, float z)
         {
-            cb.SetComputeVectorParam(Cs, id, new Vector4(x, y, z));
+            cb.SetComputeVectorParam(Shader, id, new Vector4(x, y, z));
         }
         public void SetVector(CommandBuffer cb, int id, float x, float y, float z, float w)
         {
-            cb.SetComputeVectorParam(Cs, id, new Vector4(x, y, z, w));
+            cb.SetComputeVectorParam(Shader, id, new Vector4(x, y, z, w));
         }
         public void SetVector(CommandBuffer cb, int id, float2 value)
         {
-            cb.SetComputeVectorParam(Cs, id, new Vector4(value.x, value.y));
+            cb.SetComputeVectorParam(Shader, id, new Vector4(value.x, value.y));
         }
         public void SetVector(CommandBuffer cb, int id, float3 value)
         {
-            cb.SetComputeVectorParam(Cs, id, new Vector4(value.x, value.y, value.z));
+            cb.SetComputeVectorParam(Shader, id, new Vector4(value.x, value.y, value.z));
         }
         public void SetVector(CommandBuffer cb, int id, float4 value)
         {
-            cb.SetComputeVectorParam(Cs, id, new Vector4(value.x, value.y, value.z, value.w));
+            cb.SetComputeVectorParam(Shader, id, new Vector4(value.x, value.y, value.z, value.w));
         }
         public void SetVector(CommandBuffer cb, int id, Vector2 value)
         {
-            cb.SetComputeVectorParam(Cs, id, value);
+            cb.SetComputeVectorParam(Shader, id, value);
         }
         public void SetVector(CommandBuffer cb, int id, Vector3 value)
         {
-            cb.SetComputeVectorParam(Cs, id, value);
+            cb.SetComputeVectorParam(Shader, id, value);
         }
         public void SetVector(CommandBuffer cb, int id, Vector4 value)
         {
-            cb.SetComputeVectorParam(Cs, id, value);
+            cb.SetComputeVectorParam(Shader, id, value);
         }
         public void SetVector(CommandBuffer cb, string name, float x, float y)
         {
-            cb.SetComputeVectorParam(Cs, name, new Vector4(x, y));
+            cb.SetComputeVectorParam(Shader, name, new Vector4(x, y));
         }
         public void SetVector(CommandBuffer cb, string name, float x, float y, float z)
         {
-            cb.SetComputeVectorParam(Cs, name, new Vector4(x, y, z));
+            cb.SetComputeVectorParam(Shader, name, new Vector4(x, y, z));
         }
         public void SetVector(CommandBuffer cb, string name, float x, float y, float z, float w)
         {
-            cb.SetComputeVectorParam(Cs, name, new Vector4(x, y, z, w));
+            cb.SetComputeVectorParam(Shader, name, new Vector4(x, y, z, w));
         }
         public void SetVector(CommandBuffer cb, string name, float2 value)
         {
-            cb.SetComputeVectorParam(Cs, name, new Vector4(value.x, value.y));
+            cb.SetComputeVectorParam(Shader, name, new Vector4(value.x, value.y));
         }
         public void SetVector(CommandBuffer cb, string name, float3 value)
         {
-            cb.SetComputeVectorParam(Cs, name, new Vector4(value.x, value.y, value.z));
+            cb.SetComputeVectorParam(Shader, name, new Vector4(value.x, value.y, value.z));
         }
         public void SetVector(CommandBuffer cb, string name, float4 value)
         {
-            cb.SetComputeVectorParam(Cs, name, new Vector4(value.x, value.y, value.z, value.w));
+            cb.SetComputeVectorParam(Shader, name, new Vector4(value.x, value.y, value.z, value.w));
         }
         public void SetVector(CommandBuffer cb, string name, Vector2 value)
         {
-            cb.SetComputeVectorParam(Cs, name, value);
+            cb.SetComputeVectorParam(Shader, name, value);
         }
         public void SetVector(CommandBuffer cb, string name, Vector3 value)
         {
-            cb.SetComputeVectorParam(Cs, name, value);
+            cb.SetComputeVectorParam(Shader, name, value);
         }
         public void SetVector(CommandBuffer cb, string name, Vector4 value)
         {
-            cb.SetComputeVectorParam(Cs, name, value);
+            cb.SetComputeVectorParam(Shader, name, value);
         }
 
         public void SetVector(IComputeCommandBuffer cb, int id, float x, float y)
         {
-            cb.SetComputeVectorParam(Cs, id, new Vector4(x, y));
+            cb.SetComputeVectorParam(Shader, id, new Vector4(x, y));
         }
         public void SetVector(IComputeCommandBuffer cb, int id, float x, float y, float z)
         {
-            cb.SetComputeVectorParam(Cs, id, new Vector4(x, y, z));
+            cb.SetComputeVectorParam(Shader, id, new Vector4(x, y, z));
         }
         public void SetVector(IComputeCommandBuffer cb, int id, float x, float y, float z, float w)
         {
-            cb.SetComputeVectorParam(Cs, id, new Vector4(x, y, z, w));
+            cb.SetComputeVectorParam(Shader, id, new Vector4(x, y, z, w));
         }
         public void SetVector(IComputeCommandBuffer cb, int id, float2 value)
         {
-            cb.SetComputeVectorParam(Cs, id, new Vector4(value.x, value.y));
+            cb.SetComputeVectorParam(Shader, id, new Vector4(value.x, value.y));
         }
         public void SetVector(IComputeCommandBuffer cb, int id, float3 value)
         {
-            cb.SetComputeVectorParam(Cs, id, new Vector4(value.x, value.y, value.z));
+            cb.SetComputeVectorParam(Shader, id, new Vector4(value.x, value.y, value.z));
         }
         public void SetVector(IComputeCommandBuffer cb, int id, float4 value)
         {
-            cb.SetComputeVectorParam(Cs, id, new Vector4(value.x, value.y, value.z, value.w));
+            cb.SetComputeVectorParam(Shader, id, new Vector4(value.x, value.y, value.z, value.w));
         }
         public void SetVector(IComputeCommandBuffer cb, int id, Vector2 value)
         {
-            cb.SetComputeVectorParam(Cs, id, value);
+            cb.SetComputeVectorParam(Shader, id, value);
         }
         public void SetVector(IComputeCommandBuffer cb, int id, Vector3 value)
         {
-            cb.SetComputeVectorParam(Cs, id, value);
+            cb.SetComputeVectorParam(Shader, id, value);
         }
         public void SetVector(IComputeCommandBuffer cb, int id, Vector4 value)
         {
-            cb.SetComputeVectorParam(Cs, id, value);
+            cb.SetComputeVectorParam(Shader, id, value);
         }
         public void SetVector(IComputeCommandBuffer cb, string name, float x, float y)
         {
-            cb.SetComputeVectorParam(Cs, name, new Vector4(x, y));
+            cb.SetComputeVectorParam(Shader, name, new Vector4(x, y));
         }
         public void SetVector(IComputeCommandBuffer cb, string name, float x, float y, float z)
         {
-            cb.SetComputeVectorParam(Cs, name, new Vector4(x, y, z));
+            cb.SetComputeVectorParam(Shader, name, new Vector4(x, y, z));
         }
         public void SetVector(IComputeCommandBuffer cb, string name, float x, float y, float z, float w)
         {
-            cb.SetComputeVectorParam(Cs, name, new Vector4(x, y, z, w));
+            cb.SetComputeVectorParam(Shader, name, new Vector4(x, y, z, w));
         }
         public void SetVector(IComputeCommandBuffer cb, string name, float2 value)
         {
-            cb.SetComputeVectorParam(Cs, name, new Vector4(value.x, value.y));
+            cb.SetComputeVectorParam(Shader, name, new Vector4(value.x, value.y));
         }
         public void SetVector(IComputeCommandBuffer cb, string name, float3 value)
         {
-            cb.SetComputeVectorParam(Cs, name, new Vector4(value.x, value.y, value.z));
+            cb.SetComputeVectorParam(Shader, name, new Vector4(value.x, value.y, value.z));
         }
         public void SetVector(IComputeCommandBuffer cb, string name, float4 value)
         {
-            cb.SetComputeVectorParam(Cs, name, new Vector4(value.x, value.y, value.z, value.w));
+            cb.SetComputeVectorParam(Shader, name, new Vector4(value.x, value.y, value.z, value.w));
         }
         public void SetVector(IComputeCommandBuffer cb, string name, Vector2 value)
         {
-            cb.SetComputeVectorParam(Cs, name, value);
+            cb.SetComputeVectorParam(Shader, name, value);
         }
         public void SetVector(IComputeCommandBuffer cb, string name, Vector3 value)
         {
-            cb.SetComputeVectorParam(Cs, name, value);
+            cb.SetComputeVectorParam(Shader, name, value);
         }
         public void SetVector(IComputeCommandBuffer cb, string name, Vector4 value)
         {
-            cb.SetComputeVectorParam(Cs, name, value);
+            cb.SetComputeVectorParam(Shader, name, value);
         }
         #endregion
 
         #region SetMatrix
         public void SetMatrix(int id, Matrix4x4 matrix)
         {
-            Cs.SetMatrix(id, matrix);
+            Shader.SetMatrix(id, matrix);
         }
         public void SetMatrix(int id, float4x4 matrix)
         {
-            Cs.SetMatrix(id, matrix);
+            Shader.SetMatrix(id, matrix);
         }
         public void SetMatrix(string name, Matrix4x4 matrix)
         {
-            Cs.SetMatrix(name, matrix);
+            Shader.SetMatrix(name, matrix);
         }
         public void SetMatrix(string name, float4x4 matrix)
         {
-            Cs.SetMatrix(name, matrix);
+            Shader.SetMatrix(name, matrix);
         }
 
         public void SetMatrix(CommandBuffer cb, int id, Matrix4x4 matrix)
         {
-            cb.SetComputeMatrixParam(Cs, id, matrix);
+            cb.SetComputeMatrixParam(Shader, id, matrix);
         }
         public void SetMatrix(CommandBuffer cb, int id, float4x4 matrix)
         {
-            cb.SetComputeMatrixParam(Cs, id, matrix);
+            cb.SetComputeMatrixParam(Shader, id, matrix);
         }
         public void SetMatrix(CommandBuffer cb, string name, Matrix4x4 matrix)
         {
-            cb.SetComputeMatrixParam(Cs, name, matrix);
+            cb.SetComputeMatrixParam(Shader, name, matrix);
         }
         public void SetMatrix(CommandBuffer cb, string name, float4x4 matrix)
         {
-            cb.SetComputeMatrixParam(Cs, name, matrix);
+            cb.SetComputeMatrixParam(Shader, name, matrix);
         }
 
         public void SetMatrix(IComputeCommandBuffer cb, int id, Matrix4x4 matrix)
         {
-            cb.SetComputeMatrixParam(Cs, id, matrix);
+            cb.SetComputeMatrixParam(Shader, id, matrix);
         }
         public void SetMatrix(IComputeCommandBuffer cb, int id, float4x4 matrix)
         {
-            cb.SetComputeMatrixParam(Cs, id, matrix);
+            cb.SetComputeMatrixParam(Shader, id, matrix);
         }
         public void SetMatrix(IComputeCommandBuffer cb, string name, Matrix4x4 matrix)
         {
-            cb.SetComputeMatrixParam(Cs, name, matrix);
+            cb.SetComputeMatrixParam(Shader, name, matrix);
         }
         public void SetMatrix(IComputeCommandBuffer cb, string name, float4x4 matrix)
         {
-            cb.SetComputeMatrixParam(Cs, name, matrix);
+            cb.SetComputeMatrixParam(Shader, name, matrix);
         }
         #endregion
 
         #region SetBuffer
         public void SetBuffer(int kernelIndex, int id, GraphicsBuffer buffer)
         {
-            Cs.SetBuffer(kernelIndex, id, buffer);
+            Shader.SetBuffer(kernelIndex, id, buffer);
         }
         public void SetBuffer(ComputeKernel kernel, int id, GraphicsBuffer buffer)
         {
-            SetBuffer(kernel.ID, id, buffer);
+            SetBuffer(kernel.Index, id, buffer);
         }
         public void SetBuffer(int kernelIndex, string name, GraphicsBuffer buffer)
         {
-            Cs.SetBuffer(kernelIndex, name, buffer);
+            Shader.SetBuffer(kernelIndex, name, buffer);
         }
         public void SetBuffer(ComputeKernel kernel, string name, GraphicsBuffer buffer)
         {
-            SetBuffer(kernel.ID, name, buffer);
+            SetBuffer(kernel.Index, name, buffer);
         }
 
         public void SetBuffer(CommandBuffer cb, int kernelIndex, int id, GraphicsBuffer buffer)
         {
-            cb.SetComputeBufferParam(Cs, kernelIndex, id, buffer);
+            cb.SetComputeBufferParam(Shader, kernelIndex, id, buffer);
         }
         public void SetBuffer(CommandBuffer cb, ComputeKernel kernel, int id, GraphicsBuffer buffer)
         {
-            SetBuffer(cb, kernel.ID, id, buffer);
+            SetBuffer(cb, kernel.Index, id, buffer);
         }
         public void SetBuffer(CommandBuffer cb, int kernelIndex, string name, GraphicsBuffer buffer)
         {
-            cb.SetComputeBufferParam(Cs, kernelIndex, name, buffer);
+            cb.SetComputeBufferParam(Shader, kernelIndex, name, buffer);
         }
         public void SetBuffer(CommandBuffer cb, ComputeKernel kernel, string name, GraphicsBuffer buffer)
         {
-            SetBuffer(cb, kernel.ID, name, buffer);
+            SetBuffer(cb, kernel.Index, name, buffer);
         }
 
         public void SetBuffer(IComputeCommandBuffer cb, int kernelIndex, int id, GraphicsBuffer buffer)
         {
-            cb.SetComputeBufferParam(Cs, kernelIndex, id, buffer);
+            cb.SetComputeBufferParam(Shader, kernelIndex, id, buffer);
         }
         public void SetBuffer(IComputeCommandBuffer cb, ComputeKernel kernel, int id, GraphicsBuffer buffer)
         {
-            SetBuffer(cb, kernel.ID, id, buffer);
+            SetBuffer(cb, kernel.Index, id, buffer);
         }
         public void SetBuffer(IComputeCommandBuffer cb, int kernelIndex, string name, GraphicsBuffer buffer)
         {
-            cb.SetComputeBufferParam(Cs, kernelIndex, name, buffer);
+            cb.SetComputeBufferParam(Shader, kernelIndex, name, buffer);
         }
         public void SetBuffer(IComputeCommandBuffer cb, ComputeKernel kernel, string name, GraphicsBuffer buffer)
         {
-            SetBuffer(cb, kernel.ID, name, buffer);
+            SetBuffer(cb, kernel.Index, name, buffer);
         }
         #endregion
 
@@ -903,7 +899,7 @@ namespace Abecombe.GpuTools
                 return;
             }
             size = size == -1 ? buffer.stride - offset : size;
-            Cs.SetConstantBuffer(id, buffer, offset, size);
+            Shader.SetConstantBuffer(id, buffer, offset, size);
         }
         public void SetConstantBuffer(string name, GraphicsBuffer buffer, int offset = 0, int size = -1)
         {
@@ -918,7 +914,7 @@ namespace Abecombe.GpuTools
                 return;
             }
             size = size == -1 ? buffer.stride - offset : size;
-            Cs.SetConstantBuffer(name, buffer, offset, size);
+            Shader.SetConstantBuffer(name, buffer, offset, size);
         }
 
         public void SetConstantBuffer(CommandBuffer cb, int id, GraphicsBuffer buffer, int offset = 0, int size = -1)
@@ -934,7 +930,7 @@ namespace Abecombe.GpuTools
                 return;
             }
             size = size == -1 ? buffer.stride - offset : size;
-            cb.SetComputeConstantBufferParam(Cs, id, buffer, offset, size);
+            cb.SetComputeConstantBufferParam(Shader, id, buffer, offset, size);
         }
         public void SetConstantBuffer(CommandBuffer cb, string name, GraphicsBuffer buffer, int offset = 0, int size = -1)
         {
@@ -949,7 +945,7 @@ namespace Abecombe.GpuTools
                 return;
             }
             size = size == -1 ? buffer.stride - offset : size;
-            cb.SetComputeConstantBufferParam(Cs, name, buffer, offset, size);
+            cb.SetComputeConstantBufferParam(Shader, name, buffer, offset, size);
         }
 
         public void SetConstantBuffer(IComputeCommandBuffer cb, int id, GraphicsBuffer buffer, int offset = 0, int size = -1)
@@ -965,7 +961,7 @@ namespace Abecombe.GpuTools
                 return;
             }
             size = size == -1 ? buffer.stride - offset : size;
-            cb.SetComputeConstantBufferParam(Cs, id, buffer, offset, size);
+            cb.SetComputeConstantBufferParam(Shader, id, buffer, offset, size);
         }
         public void SetConstantBuffer(IComputeCommandBuffer cb, string name, GraphicsBuffer buffer, int offset = 0, int size = -1)
         {
@@ -980,127 +976,127 @@ namespace Abecombe.GpuTools
                 return;
             }
             size = size == -1 ? buffer.stride - offset : size;
-            cb.SetComputeConstantBufferParam(Cs, name, buffer, offset, size);
+            cb.SetComputeConstantBufferParam(Shader, name, buffer, offset, size);
         }
         #endregion
 
         #region SetTexture
         public void SetTexture(int kernelIndex, int id, Texture tex)
         {
-            Cs.SetTexture(kernelIndex, id, tex);
+            Shader.SetTexture(kernelIndex, id, tex);
         }
         public void SetTexture(ComputeKernel kernel, int id, Texture tex)
         {
-            SetTexture(kernel.ID, id, tex);
+            SetTexture(kernel.Index, id, tex);
         }
         public void SetTexture(int kernelIndex, string name, Texture tex)
         {
-            Cs.SetTexture(kernelIndex, name, tex);
+            Shader.SetTexture(kernelIndex, name, tex);
         }
         public void SetTexture(ComputeKernel kernel, string name, Texture tex)
         {
-            SetTexture(kernel.ID, name, tex);
+            SetTexture(kernel.Index, name, tex);
         }
 
         public void SetTexture(CommandBuffer cb, int kernelIndex, int id, Texture tex)
         {
-            cb.SetComputeTextureParam(Cs, kernelIndex, id, tex);
+            cb.SetComputeTextureParam(Shader, kernelIndex, id, tex);
         }
         public void SetTexture(CommandBuffer cb, ComputeKernel kernel, int id, Texture tex)
         {
-            SetTexture(cb, kernel.ID, id, tex);
+            SetTexture(cb, kernel.Index, id, tex);
         }
         public void SetTexture(CommandBuffer cb, int kernelIndex, string name, Texture tex)
         {
-            cb.SetComputeTextureParam(Cs, kernelIndex, name, tex);
+            cb.SetComputeTextureParam(Shader, kernelIndex, name, tex);
         }
         public void SetTexture(CommandBuffer cb, ComputeKernel kernel, string name, Texture tex)
         {
-            SetTexture(cb, kernel.ID, name, tex);
+            SetTexture(cb, kernel.Index, name, tex);
         }
 
         public void SetTexture(IComputeCommandBuffer cb, int kernelIndex, int id, TextureHandle tex)
         {
-            cb.SetComputeTextureParam(Cs, kernelIndex, id, tex);
+            cb.SetComputeTextureParam(Shader, kernelIndex, id, tex);
         }
         public void SetTexture(IComputeCommandBuffer cb, ComputeKernel kernel, int id, TextureHandle tex)
         {
-            SetTexture(cb, kernel.ID, id, tex);
+            SetTexture(cb, kernel.Index, id, tex);
         }
         public void SetTexture(IComputeCommandBuffer cb, int kernelIndex, string name, TextureHandle tex)
         {
-            cb.SetComputeTextureParam(Cs, kernelIndex, name, tex);
+            cb.SetComputeTextureParam(Shader, kernelIndex, name, tex);
         }
         public void SetTexture(IComputeCommandBuffer cb, ComputeKernel kernel, string name, TextureHandle tex)
         {
-            SetTexture(cb, kernel.ID, name, tex);
+            SetTexture(cb, kernel.Index, name, tex);
         }
         #endregion
 
         #region SetRayTracingAccelerationStructure
         public void SetRayTracingAccelerationStructure(int kernelIndex, int id, RayTracingAccelerationStructure rtas)
         {
-            Cs.SetRayTracingAccelerationStructure(kernelIndex, id, rtas);
+            Shader.SetRayTracingAccelerationStructure(kernelIndex, id, rtas);
         }
         public void SetRayTracingAccelerationStructure(ComputeKernel kernel, int id, RayTracingAccelerationStructure rtas)
         {
-            SetRayTracingAccelerationStructure(kernel.ID, id, rtas);
+            SetRayTracingAccelerationStructure(kernel.Index, id, rtas);
         }
 
         public void SetRayTracingAccelerationStructure(int kernelIndex, string name, RayTracingAccelerationStructure rtas)
         {
-            Cs.SetRayTracingAccelerationStructure(kernelIndex, name, rtas);
+            Shader.SetRayTracingAccelerationStructure(kernelIndex, name, rtas);
         }
         public void SetRayTracingAccelerationStructure(ComputeKernel kernel, string name, RayTracingAccelerationStructure rtas)
         {
-            SetRayTracingAccelerationStructure(kernel.ID, name, rtas);
+            SetRayTracingAccelerationStructure(kernel.Index, name, rtas);
         }
 
         public void SetRayTracingAccelerationStructure(CommandBuffer cb, int kernelIndex, int id, RayTracingAccelerationStructure rtas)
         {
-            cb.SetRayTracingAccelerationStructure(Cs, kernelIndex, id, rtas);
+            cb.SetRayTracingAccelerationStructure(Shader, kernelIndex, id, rtas);
         }
         public void SetRayTracingAccelerationStructure(CommandBuffer cb, ComputeKernel kernel, int id, RayTracingAccelerationStructure rtas)
         {
-            SetRayTracingAccelerationStructure(cb, kernel.ID, id, rtas);
+            SetRayTracingAccelerationStructure(cb, kernel.Index, id, rtas);
         }
 
         public void SetRayTracingAccelerationStructure(CommandBuffer cb, int kernelIndex, string name, RayTracingAccelerationStructure rtas)
         {
-            cb.SetRayTracingAccelerationStructure(Cs, kernelIndex, name, rtas);
+            cb.SetRayTracingAccelerationStructure(Shader, kernelIndex, name, rtas);
         }
         public void SetRayTracingAccelerationStructure(CommandBuffer cb, ComputeKernel kernel, string name, RayTracingAccelerationStructure rtas)
         {
-            SetRayTracingAccelerationStructure(cb, kernel.ID, name, rtas);
+            SetRayTracingAccelerationStructure(cb, kernel.Index, name, rtas);
         }
 
         public void SetRayTracingAccelerationStructure(IComputeCommandBuffer cb, int kernelIndex, int id, RayTracingAccelerationStructure rtas)
         {
-            cb.SetRayTracingAccelerationStructure(Cs, kernelIndex, id, rtas);
+            cb.SetRayTracingAccelerationStructure(Shader, kernelIndex, id, rtas);
         }
         public void SetRayTracingAccelerationStructure(IComputeCommandBuffer cb, ComputeKernel kernel, int id, RayTracingAccelerationStructure rtas)
         {
-            SetRayTracingAccelerationStructure(cb, kernel.ID, id, rtas);
+            SetRayTracingAccelerationStructure(cb, kernel.Index, id, rtas);
         }
 
         public void SetRayTracingAccelerationStructure(IComputeCommandBuffer cb, int kernelIndex, string name, RayTracingAccelerationStructure rtas)
         {
-            cb.SetRayTracingAccelerationStructure(Cs, kernelIndex, name, rtas);
+            cb.SetRayTracingAccelerationStructure(Shader, kernelIndex, name, rtas);
         }
         public void SetRayTracingAccelerationStructure(IComputeCommandBuffer cb, ComputeKernel kernel, string name, RayTracingAccelerationStructure rtas)
         {
-            SetRayTracingAccelerationStructure(cb, kernel.ID, name, rtas);
+            SetRayTracingAccelerationStructure(cb, kernel.Index, name, rtas);
         }
         #endregion
 
         #region SetKeyword
         public void EnableKeyword(string keyword)
         {
-            Cs.EnableKeyword(keyword);
+            Shader.EnableKeyword(keyword);
         }
         public void DisableKeyword(string keyword)
         {
-            Cs.DisableKeyword(keyword);
+            Shader.DisableKeyword(keyword);
         }
         public void SetKeyword(string keyword, bool enabled)
         {
@@ -1148,33 +1144,33 @@ namespace Abecombe.GpuTools
         {
             EnableKeyword(ComputeShaderUtility.DirectDispatch);
             DisableKeyword(ComputeShaderUtility.IndirectDispatch);
-            Cs.Dispatch(kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
+            Shader.Dispatch(kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
         public void Dispatch(ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            Dispatch(kernel.ID, threadGroupsX, threadGroupsY, threadGroupsZ);
+            Dispatch(kernel.Index, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
 
         public void Dispatch(CommandBuffer cb, int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
             EnableKeyword(cb, ComputeShaderUtility.DirectDispatch);
             DisableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
-            cb.DispatchCompute(Cs, kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
+            cb.DispatchCompute(Shader, kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
         public void Dispatch(CommandBuffer cb, ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            Dispatch(cb, kernel.ID, threadGroupsX, threadGroupsY, threadGroupsZ);
+            Dispatch(cb, kernel.Index, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
 
         public void Dispatch(IComputeCommandBuffer cb, int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
             EnableKeyword(cb, ComputeShaderUtility.DirectDispatch);
             DisableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
-            cb.DispatchCompute(Cs, kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
+            cb.DispatchCompute(Shader, kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
         public void Dispatch(IComputeCommandBuffer cb, ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            Dispatch(cb, kernel.ID, threadGroupsX, threadGroupsY, threadGroupsZ);
+            Dispatch(cb, kernel.Index, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
         #endregion
 
@@ -1183,33 +1179,33 @@ namespace Abecombe.GpuTools
         {
             DisableKeyword(ComputeShaderUtility.DirectDispatch);
             EnableKeyword(ComputeShaderUtility.IndirectDispatch);
-            Cs.DispatchIndirect(kernelIndex, argsBuffer);
+            Shader.DispatchIndirect(kernelIndex, argsBuffer);
         }
         public void DispatchIndirect(ComputeKernel kernel, GraphicsBuffer argsBuffer)
         {
-            DispatchIndirect(kernel.ID, argsBuffer);
+            DispatchIndirect(kernel.Index, argsBuffer);
         }
 
         public void DispatchIndirect(CommandBuffer cb, int kernelIndex, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
             DisableKeyword(cb, ComputeShaderUtility.DirectDispatch);
             EnableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
-            cb.DispatchCompute(Cs, kernelIndex, argsBuffer, argsOffset);
+            cb.DispatchCompute(Shader, kernelIndex, argsBuffer, argsOffset);
         }
         public void DispatchIndirect(CommandBuffer cb, ComputeKernel kernel, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
-            DispatchIndirect(cb, kernel.ID, argsBuffer, argsOffset);
+            DispatchIndirect(cb, kernel.Index, argsBuffer, argsOffset);
         }
 
         public void DispatchIndirect(IComputeCommandBuffer cb, int kernelIndex, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
             DisableKeyword(cb, ComputeShaderUtility.DirectDispatch);
             EnableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
-            cb.DispatchCompute(Cs, kernelIndex, argsBuffer, argsOffset);
+            cb.DispatchCompute(Shader, kernelIndex, argsBuffer, argsOffset);
         }
         public void DispatchIndirect(IComputeCommandBuffer cb, ComputeKernel kernel, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
-            DispatchIndirect(cb, kernel.ID, argsBuffer, argsOffset);
+            DispatchIndirect(cb, kernel.Index, argsBuffer, argsOffset);
         }
         #endregion
     }
