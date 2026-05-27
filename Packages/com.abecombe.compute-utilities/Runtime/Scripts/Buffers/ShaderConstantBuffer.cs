@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Abecombe.GpuTools
+namespace Abecombe.ComputeUtilities
 {
     // You should layout the struct correctly to match the hlsl constant buffer layout.
     // See https://maraneshi.github.io/HLSL-ConstantBufferLayoutVisualizer/

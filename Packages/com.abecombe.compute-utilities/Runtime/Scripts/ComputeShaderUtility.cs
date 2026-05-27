@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-namespace Abecombe.GpuTools
+namespace Abecombe.ComputeUtilities
 {
     public static class ComputeShaderUtility
     {
@@ -23,8 +23,8 @@ namespace Abecombe.GpuTools
         internal static readonly int DispatchThreadSizeShaderPropertyID = Shader.PropertyToID("_DispatchThreadSize");
 
         // for GraphicsBufferBase
-        internal const string ComputeShaderConfigPath = "GpuTools/ComputeShaderConfig";
-        internal const string UtilityShaderResourcePath = "GpuTools/ComputeUtilities";
+        internal const string ComputeShaderConfigPath = "ComputeUtilities/ComputeShaderConfig";
+        internal const string UtilityShaderResourcePath = "ComputeUtilities/ComputeUtilities";
         internal const string CopyBuffer1KernelName = "CopyBuffer1";
         internal const string CopyBuffer32KernelName = "CopyBuffer32";
         internal const string CopyBuffer128KernelName = "CopyBuffer128";

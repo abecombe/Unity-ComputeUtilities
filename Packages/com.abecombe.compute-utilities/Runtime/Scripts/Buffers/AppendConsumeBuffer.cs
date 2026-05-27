@@ -1,7 +1,8 @@
+using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Abecombe.GpuTools
+namespace Abecombe.ComputeUtilities
 {
     public interface IAppendConsumeBuffer : IGraphicsBuffer
     {
@@ -39,6 +40,13 @@ namespace Abecombe.GpuTools
         public void Init(int size)
         {
             Dispose();
+            if (size <= 0)
+            {
+                _length = 0;
+                Debug.LogError("AppendConsumeBuffer size must be greater than zero.");
+                return;
+            }
+
             _length = size;
             InitBufferProgram();
             ResetCounter();
@@ -168,7 +176,7 @@ namespace Abecombe.GpuTools
             cs.SetBuffer(cb, kernel, propertyIDs[count++], buffer.Data);
             cs.SetBuffer(cb, kernel, propertyIDs[count++], buffer.CountBuffer);
         }
-        public static void SetConsumeBuffer<T>(this ComputeKernel kernel, CommandBuffer cb, string name, IAppendConsumeBuffer buffer) where T : struct
+        public static void SetConsumeBuffer(this ComputeKernel kernel, CommandBuffer cb, string name, IAppendConsumeBuffer buffer)
         {
             kernel.Program.SetConsumeBuffer(cb, kernel, name, buffer);
         }
@@ -181,7 +189,7 @@ namespace Abecombe.GpuTools
             cs.SetBuffer(cb, kernel, propertyIDs[count++], buffer.Data);
             cs.SetBuffer(cb, kernel, propertyIDs[count++], buffer.CountBuffer);
         }
-        public static void SetConsumeBuffer<T>(this ComputeKernel kernel, IComputeCommandBuffer cb, string name, IAppendConsumeBuffer buffer) where T : struct
+        public static void SetConsumeBuffer(this ComputeKernel kernel, IComputeCommandBuffer cb, string name, IAppendConsumeBuffer buffer)
         {
             kernel.Program.SetConsumeBuffer(cb, kernel, name, buffer);
         }

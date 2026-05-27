@@ -1,14 +1,15 @@
+using System;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Abecombe.GpuTools
+namespace Abecombe.ComputeUtilities
 {
     public class IndirectArgumentsBuffer : GraphicsBufferBase<uint>
     {
         public override GraphicsBuffer.Target BufferTarget => GraphicsBuffer.Target.IndirectArguments | GraphicsBuffer.Target.Raw;
 
-        public override int Length => Args.Length;
+        public override int Length => Args?.Length ?? 0;
 
         public uint[] Args { get; protected set; }
 
@@ -18,21 +19,49 @@ namespace Abecombe.GpuTools
 
         public void Init(int size, int countBufferOffset = 0, int countBufferSize = 1)
         {
+            Dispose();
+            if (size <= 0)
+            {
+                Args = Array.Empty<uint>();
+                CountBufferOffset = 0;
+                CountBufferSize = 0;
+                Debug.LogError("IndirectArgumentsBuffer size must be greater than zero.");
+                return;
+            }
+
             Args = new uint[size];
             InitPrivate(countBufferOffset, countBufferSize);
         }
         public void Init(uint[] args, int countBufferOffset = 0, int countBufferSize = 1)
         {
+            Dispose();
+            if (args == null || args.Length == 0)
+            {
+                Args = Array.Empty<uint>();
+                CountBufferOffset = 0;
+                CountBufferSize = 0;
+                Debug.LogError("IndirectArgumentsBuffer args must contain at least one element.");
+                return;
+            }
+
             Args = (uint[])args.Clone();
             InitPrivate(countBufferOffset, countBufferSize);
         }
         protected void InitPrivate(int countBufferOffset, int countBufferSize)
         {
-            Dispose();
+            var clampedCountBufferSize = math.clamp(countBufferSize, 1, 3);
+            if (countBufferOffset < 0 || countBufferOffset + clampedCountBufferSize > Args.Length)
+            {
+                CountBufferOffset = 0;
+                CountBufferSize = 0;
+                Debug.LogError("IndirectArgumentsBuffer count range is outside the args buffer.");
+                return;
+            }
+
             InitBufferProgram();
             SetData(Args);
             CountBufferOffset = countBufferOffset;
-            CountBufferSize = math.clamp(countBufferSize, 1, 3);
+            CountBufferSize = clampedCountBufferSize;
             DispatchIndirectArgumentsBuffer.Init(this, CountBufferOffset, CountBufferSize);
             IsInitialized = true;
         }
@@ -45,6 +74,8 @@ namespace Abecombe.GpuTools
                 DispatchIndirectArgumentsBuffer.Dispose();
             }
             IsInitialized = false;
+            CountBufferOffset = 0;
+            CountBufferSize = 0;
         }
 
         public void SetDataFromArgs()

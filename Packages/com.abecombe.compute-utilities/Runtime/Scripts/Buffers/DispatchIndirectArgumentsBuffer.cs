@@ -4,7 +4,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Abecombe.GpuTools
+namespace Abecombe.ComputeUtilities
 {
     public class DispatchIndirectArgumentsBuffer : GraphicsBufferBase<uint>
     {
@@ -21,6 +21,16 @@ namespace Abecombe.GpuTools
         public void Init(GraphicsBufferBase<uint> countBuffer, int countBufferOffset, int countBufferSize)
         {
             Dispose();
+            var clampedCountBufferSize = math.clamp(countBufferSize, 1, 3);
+            if (countBuffer == null || countBufferOffset < 0 || countBufferOffset + clampedCountBufferSize > countBuffer.Length)
+            {
+                CountBuffer = null;
+                CountBufferOffset = 0;
+                CountBufferSize = 0;
+                Debug.LogError("DispatchIndirectArgumentsBuffer count range is outside the count buffer.");
+                return;
+            }
+
             InitBufferProgram();
             using (var array = new NativeArray<uint>(new[] { 1u, 1u, 1u }, Allocator.Temp))
             {
@@ -33,7 +43,7 @@ namespace Abecombe.GpuTools
             }
             CountBuffer = countBuffer;
             CountBufferOffset = countBufferOffset;
-            CountBufferSize = math.clamp(countBufferSize, 1, 3);
+            CountBufferSize = clampedCountBufferSize;
             IsInitialized = true;
         }
 
@@ -85,10 +95,13 @@ namespace Abecombe.GpuTools
             if (IsInitialized)
             {
                 ReleaseBufferResources();
-                DispatchThreadSizeBuffer.Release();
+                DispatchThreadSizeBuffer?.Release();
                 DispatchThreadSizeBuffer = null;
             }
             IsInitialized = false;
+            CountBuffer = null;
+            CountBufferOffset = 0;
+            CountBufferSize = 0;
         }
     }
 

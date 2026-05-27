@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Abecombe.GpuTools
+namespace Abecombe.ComputeUtilities
 {
     public class CounterBuffer : GraphicsBufferBase<uint>
     {
@@ -80,7 +80,7 @@ namespace Abecombe.GpuTools
             SetCounterValue(cb, 0);
         }
 
-        public uint GetCountValue()
+        public uint GetCounterValue()
         {
             UpdateCountBuffer();
 

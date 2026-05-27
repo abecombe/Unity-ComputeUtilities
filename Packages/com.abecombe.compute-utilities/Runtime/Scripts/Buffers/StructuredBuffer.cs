@@ -3,7 +3,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Abecombe.GpuTools
+namespace Abecombe.ComputeUtilities
 {
     public interface IStructuredBuffer : IGraphicsBuffer
     {
@@ -71,6 +71,23 @@ namespace Abecombe.GpuTools
         public int3 EndIndex => StartIndex + Size - 1;
         public float3 PositionOffset { get; protected set; }
 
+        internal static bool ValidateSize(int3 size)
+        {
+            if (size.x <= 0 || size.y <= 0 || size.z <= 0)
+            {
+                Debug.LogError("StructuredBuffer size must be greater than zero in every dimension.");
+                return false;
+            }
+
+            if ((long)size.x * size.y * size.z > int.MaxValue)
+            {
+                Debug.LogError("StructuredBuffer length exceeds the supported maximum size.");
+                return false;
+            }
+
+            return true;
+        }
+
         public void Init(int size)
         {
             Init(new int3(size, 1, 1));
@@ -82,6 +99,12 @@ namespace Abecombe.GpuTools
         public void Init(int3 size)
         {
             Dispose();
+            if (!ValidateSize(size))
+            {
+                Size = int3.zero;
+                return;
+            }
+
             Size = size;
             InitBufferProgram();
             Clear();
@@ -150,6 +173,9 @@ namespace Abecombe.GpuTools
         public void Init(int3 size)
         {
             Dispose();
+            if (!StructuredBuffer<T>.ValidateSize(size))
+                return;
+
             Buffer1.Init(size);
             Buffer2.Init(size);
             IsInitialized = true;

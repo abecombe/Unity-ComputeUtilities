@@ -1,4 +1,4 @@
-# Gpu Utils
+# Compute Utilities
 
 Small runtime utilities for working with Unity `ComputeShader` and `GraphicsBuffer`.
 
@@ -18,7 +18,7 @@ Small runtime utilities for working with Unity `ComputeShader` and `GraphicsBuff
 ## Quick Start
 
 ```csharp
-using Abecombe.GpuTools;
+using Abecombe.ComputeUtilities;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -48,6 +48,8 @@ public class ComputeExample : MonoBehaviour
 
 Assign a `ComputeShader` to `ComputeProgram` in the Inspector, or initialize it from code with `program.Init(computeShader)` or `program.Init("ResourcesPath")`.
 
+Use `program.IsInitialized` when you need to guard setup code after loading a shader dynamically.
+
 ## HLSL Helpers
 
 Include `BufferUtils.hlsl` and `DispatchHelper.hlsl` from the package path.
@@ -56,8 +58,8 @@ Include `BufferUtils.hlsl` and `DispatchHelper.hlsl` from the package path.
 #pragma kernel Main
 #pragma multi_compile _ DIRECT_DISPATCH INDIRECT_DISPATCH
 
-#include "Packages/com.abecombe.gpu-utils/Runtime/ComputeShaders/BufferUtils.hlsl"
-#include "Packages/com.abecombe.gpu-utils/Runtime/ComputeShaders/DispatchHelper.hlsl"
+#include "Packages/com.abecombe.compute-utilities/Runtime/ComputeShaders/BufferUtils.hlsl"
+#include "Packages/com.abecombe.compute-utilities/Runtime/ComputeShaders/DispatchHelper.hlsl"
 
 RW_BUFFER(float4, _Points)
 
@@ -71,7 +73,7 @@ void Main(uint3 id : SV_DispatchThreadID)
 }
 ```
 
-`DispatchDesired` sets `_DispatchThreadSize` for direct dispatch. `DispatchIndirectDesired` switches to the `INDIRECT_DISPATCH` keyword, so the same `RETURN_IF_INVALID_THREAD` macro works for indirect dispatch.
+`DispatchDesired` sets `_DispatchThreadSize` for direct dispatch. It returns without dispatching when any requested dimension is `0`, and logs an error for negative sizes. `DispatchIndirectDesired` switches to the `INDIRECT_DISPATCH` keyword, so the same `RETURN_IF_INVALID_THREAD` macro works for indirect dispatch.
 
 ## StructuredBuffer
 
@@ -132,9 +134,9 @@ kernel.DispatchIndirectDesired(args.DispatchIndirectArgumentsBuffer);
 
 ## Internal Compute Utilities
 
-The package uses `Runtime/Resources/GpuTools/ComputeUtilities.compute` internally for buffer copy, clear, and indirect dispatch argument generation.
+The package uses `Runtime/Resources/ComputeUtilities/ComputeUtilities.compute` internally for buffer copy, clear, and indirect dispatch argument generation.
 
-By default, `Resources/GpuTools/ComputeShaderConfig.asset` points to this compute shader through the `UtilityShader` field. If the config is missing, the package also tries to load `Resources/GpuTools/ComputeUtilities`.
+By default, `Resources/ComputeUtilities/ComputeShaderConfig.asset` points to this compute shader through the `UtilityShader` field. If the config is missing, the package also tries to load `Resources/ComputeUtilities/ComputeUtilities`.
 
 ## Disposal
 

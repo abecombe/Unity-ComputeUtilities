@@ -1,4 +1,4 @@
-﻿#pragma kernel CopyBuffer1
+#pragma kernel CopyBuffer1
 #pragma kernel CopyBuffer32
 #pragma kernel CopyBuffer128
 #pragma kernel CopyBuffer1024

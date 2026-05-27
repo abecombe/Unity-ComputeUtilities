@@ -1,7 +1,7 @@
 {
   "dependencies": {
-    "com.abecombe.gpu-tools": {
-      "version": "file:com.abecombe.gpu-utils",
+    "com.abecombe.compute-utilities": {
+      "version": "file:com.abecombe.compute-utilities",
       "depth": 0,
       "source": "embedded",
       "dependencies": {}

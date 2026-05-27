@@ -11,5 +11,5 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cc372697d8356ff4b8699b0e8db38f4a, type: 3}
   m_Name: ComputeShaderConfig
-  m_EditorClassIdentifier: com.abecombe.gpu-utils::Abecombe.GpuTools.ComputeShaderConfig
+  m_EditorClassIdentifier: com.abecombe.compute-utilities::Abecombe.ComputeUtilities.ComputeShaderConfig
   UtilityShader: {fileID: 7200000, guid: 24c92d08e1bb4dc8a55fa90c4a19e083, type: 3}

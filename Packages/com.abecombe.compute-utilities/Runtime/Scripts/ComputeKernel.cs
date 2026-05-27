@@ -3,14 +3,14 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 
-namespace Abecombe.GpuTools
+namespace Abecombe.ComputeUtilities
 {
     public class ComputeKernel
     {
         public ComputeProgram Program { get; }
         public string Name { get; }
         public int Index { get; }
-        public uint3 ThreadGroupSizes;
+        public uint3 ThreadGroupSizes { get; private set; }
         public uint ThreadGroupSizeX => ThreadGroupSizes.x;
         public uint ThreadGroupSizeY => ThreadGroupSizes.y;
         public uint ThreadGroupSizeZ => ThreadGroupSizes.z;
@@ -750,16 +750,45 @@ namespace Abecombe.GpuTools
         #endregion
 
         #region Dispatch
-        public void DispatchDesired(int sizeX, int sizeY = 1, int sizeZ = 1)
+        private static int GetThreadGroupCount(int size, uint threadGroupSize)
         {
-            int groupSizeX = Mathf.Max(1, (sizeX + (int)ThreadGroupSizeX - 1) / (int)ThreadGroupSizeX);
-            int groupSizeY = Mathf.Max(1, (sizeY + (int)ThreadGroupSizeY - 1) / (int)ThreadGroupSizeY);
-            int groupSizeZ = Mathf.Max(1, (sizeZ + (int)ThreadGroupSizeZ - 1) / (int)ThreadGroupSizeZ);
+            var safeThreadGroupSize = System.Math.Max(1L, threadGroupSize);
+            return (int)(((long)size + safeThreadGroupSize - 1) / safeThreadGroupSize);
+        }
+
+        private bool TryGetDispatchGroupSizes(int sizeX, int sizeY, int sizeZ, out int groupSizeX, out int groupSizeY, out int groupSizeZ)
+        {
+            groupSizeX = 0;
+            groupSizeY = 0;
+            groupSizeZ = 0;
+
+            if (sizeX < 0 || sizeY < 0 || sizeZ < 0)
+            {
+                Debug.LogError("Dispatch size must be zero or greater.");
+                return false;
+            }
+
+            if (sizeX == 0 || sizeY == 0 || sizeZ == 0)
+                return false;
+
+            groupSizeX = GetThreadGroupCount(sizeX, ThreadGroupSizeX);
+            groupSizeY = GetThreadGroupCount(sizeY, ThreadGroupSizeY);
+            groupSizeZ = GetThreadGroupCount(sizeZ, ThreadGroupSizeZ);
+
             if (groupSizeX > ComputeLimits.MaxDispatchSize || groupSizeY > ComputeLimits.MaxDispatchSize || groupSizeZ > ComputeLimits.MaxDispatchSize)
             {
-                Debug.LogError("Dispatch size exceeds maximum dispatch size");
-                return;
+                Debug.LogError("Dispatch size exceeds maximum dispatch size.");
+                return false;
             }
+
+            return true;
+        }
+
+        public void DispatchDesired(int sizeX, int sizeY = 1, int sizeZ = 1)
+        {
+            if (!TryGetDispatchGroupSizes(sizeX, sizeY, sizeZ, out var groupSizeX, out var groupSizeY, out var groupSizeZ))
+                return;
+
             Program.SetInts(ComputeShaderUtility.DispatchThreadSizeShaderPropertyID, sizeX, sizeY, sizeZ);
             Program.Dispatch(this, groupSizeX, groupSizeY, groupSizeZ);
         }
@@ -774,14 +803,9 @@ namespace Abecombe.GpuTools
 
         public void DispatchDesired(CommandBuffer cb, int sizeX, int sizeY = 1, int sizeZ = 1)
         {
-            int groupSizeX = Mathf.Max(1, (sizeX + (int)ThreadGroupSizeX - 1) / (int)ThreadGroupSizeX);
-            int groupSizeY = Mathf.Max(1, (sizeY + (int)ThreadGroupSizeY - 1) / (int)ThreadGroupSizeY);
-            int groupSizeZ = Mathf.Max(1, (sizeZ + (int)ThreadGroupSizeZ - 1) / (int)ThreadGroupSizeZ);
-            if (groupSizeX > ComputeLimits.MaxDispatchSize || groupSizeY > ComputeLimits.MaxDispatchSize || groupSizeZ > ComputeLimits.MaxDispatchSize)
-            {
-                Debug.LogError("Dispatch size exceeds maximum dispatch size");
+            if (!TryGetDispatchGroupSizes(sizeX, sizeY, sizeZ, out var groupSizeX, out var groupSizeY, out var groupSizeZ))
                 return;
-            }
+
             Program.SetInts(cb, ComputeShaderUtility.DispatchThreadSizeShaderPropertyID, sizeX, sizeY, sizeZ);
             Program.Dispatch(cb, this, groupSizeX, groupSizeY, groupSizeZ);
         }
@@ -796,14 +820,9 @@ namespace Abecombe.GpuTools
 
         public void DispatchDesired(IComputeCommandBuffer cb, int sizeX, int sizeY = 1, int sizeZ = 1)
         {
-            int groupSizeX = Mathf.Max(1, (sizeX + (int)ThreadGroupSizeX - 1) / (int)ThreadGroupSizeX);
-            int groupSizeY = Mathf.Max(1, (sizeY + (int)ThreadGroupSizeY - 1) / (int)ThreadGroupSizeY);
-            int groupSizeZ = Mathf.Max(1, (sizeZ + (int)ThreadGroupSizeZ - 1) / (int)ThreadGroupSizeZ);
-            if (groupSizeX > ComputeLimits.MaxDispatchSize || groupSizeY > ComputeLimits.MaxDispatchSize || groupSizeZ > ComputeLimits.MaxDispatchSize)
-            {
-                Debug.LogError("Dispatch size exceeds maximum dispatch size");
+            if (!TryGetDispatchGroupSizes(sizeX, sizeY, sizeZ, out var groupSizeX, out var groupSizeY, out var groupSizeZ))
                 return;
-            }
+
             Program.SetInts(cb, ComputeShaderUtility.DispatchThreadSizeShaderPropertyID, sizeX, sizeY, sizeZ);
             Program.Dispatch(cb, this, groupSizeX, groupSizeY, groupSizeZ);
         }

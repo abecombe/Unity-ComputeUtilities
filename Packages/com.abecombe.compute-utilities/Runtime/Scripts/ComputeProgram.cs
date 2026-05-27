@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 
-namespace Abecombe.GpuTools
+namespace Abecombe.ComputeUtilities
 {
     [Serializable]
     public class ComputeProgram
@@ -13,6 +13,7 @@ namespace Abecombe.GpuTools
         [SerializeField]
         private ComputeShader _shader;
         public ComputeShader Shader => _shader;
+        public bool IsInitialized => _shader != null;
 
         private Dictionary<string, ComputeKernel> _kernels = new();
 
@@ -38,12 +39,18 @@ namespace Abecombe.GpuTools
         }
         public void Init(string shaderResourcePath)
         {
-            _shader = Resources.Load<ComputeShader>(shaderResourcePath);
+            _shader = string.IsNullOrEmpty(shaderResourcePath) ? null : Resources.Load<ComputeShader>(shaderResourcePath);
             Init();
         }
 
         public ComputeKernel FindKernel(string name)
         {
+            if (_shader == null)
+            {
+                Debug.LogError($"Cannot find kernel '{name}' because Compute Shader is null.");
+                return null;
+            }
+
             if (_kernels.TryGetValue(name, out var kernel))
                 return kernel;
 

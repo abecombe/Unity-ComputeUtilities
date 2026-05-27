@@ -1,5 +1,5 @@
 
-namespace Abecombe.GpuTools
+namespace Abecombe.ComputeUtilities
 {
     public static class ComputeLimits
     {

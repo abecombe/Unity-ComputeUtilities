@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
-namespace Abecombe.GpuTools
+namespace Abecombe.ComputeUtilities
 {
     public interface IGraphicsBuffer : IDisposable
     {
@@ -59,7 +59,7 @@ namespace Abecombe.GpuTools
         public abstract GraphicsBuffer.Target BufferTarget { get; }
 
         public abstract int Length { get; }
-        public int Stride => Data.stride;
+        public int Stride => Data?.stride ?? Marshal.SizeOf(typeof(T));
         public int Bytes => Length * Stride;
 
         protected ComputeProgram _utilityProgram = new();
@@ -82,7 +82,10 @@ namespace Abecombe.GpuTools
 
             if (_utilityShaderInstance != null)
             {
-                Object.Destroy(_utilityShaderInstance);
+                if (Application.isPlaying)
+                    Object.Destroy(_utilityShaderInstance);
+                else
+                    Object.DestroyImmediate(_utilityShaderInstance);
                 _utilityShaderInstance = null;
             }
         }
@@ -94,6 +97,68 @@ namespace Abecombe.GpuTools
                 ReleaseBufferResources();
             }
             IsInitialized = false;
+        }
+
+        private bool TryPrepareCopy(IGraphicsBuffer toBuffer, int fromBufferStartIndex, int toBufferStartIndex, ref int count)
+        {
+            if (toBuffer == null)
+            {
+                Debug.LogError("Destination buffer is null.");
+                return false;
+            }
+
+            if (!IsInitialized || !toBuffer.IsInitialized)
+            {
+                Debug.LogError("Both buffers must be initialized before copying.");
+                return false;
+            }
+
+            if (Stride != toBuffer.Stride)
+            {
+                Debug.LogError($"Stride mismatch, cannot copy from stride {Stride} to {toBuffer.Stride}.");
+                return false;
+            }
+
+            if (!BufferTarget.HasFlag(GraphicsBuffer.Target.Raw) || !toBuffer.BufferTarget.HasFlag(GraphicsBuffer.Target.Raw))
+            {
+                Debug.LogError("Copy kernel only supports Raw buffers, please use your own copy method");
+                return false;
+            }
+
+            if (fromBufferStartIndex < 0 || toBufferStartIndex < 0)
+            {
+                Debug.LogError("Buffer copy start indices must be zero or greater.");
+                return false;
+            }
+
+            if (count == -1)
+            {
+                var fromAvailable = Length - fromBufferStartIndex;
+                var toAvailable = toBuffer.Length - toBufferStartIndex;
+                if (fromAvailable != toAvailable)
+                {
+                    Debug.LogError("Buffer copy ranges have different lengths, please specify count");
+                    return false;
+                }
+                count = fromAvailable;
+            }
+
+            if (count <= 0)
+                return false;
+
+            if (fromBufferStartIndex + count > Length || toBufferStartIndex + count > toBuffer.Length)
+            {
+                Debug.LogError("Buffer copy range exceeds buffer length.");
+                return false;
+            }
+
+            if (count > 1024 * ComputeLimits.MaxDispatchSize)
+            {
+                Debug.LogError("Buffer copy count exceeds maximum dispatch size, please use your own copy method");
+                return false;
+            }
+
+            return true;
         }
 
         public void SetData<U>(U[] data) where U : struct
@@ -179,34 +244,8 @@ namespace Abecombe.GpuTools
 
         public void CopyTo(IGraphicsBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
         {
-            if (Stride != toBuffer.Stride)
-            {
-                Debug.LogError($"Stride mismatch, cannot copy from stride {Stride} to {toBuffer.Stride}.");
+            if (!TryPrepareCopy(toBuffer, fromBufferStartIndex, toBufferStartIndex, ref count))
                 return;
-            }
-            if (!BufferTarget.HasFlag(GraphicsBuffer.Target.Raw) || !toBuffer.BufferTarget.HasFlag(GraphicsBuffer.Target.Raw))
-            {
-                Debug.LogError("Copy kernel only supports Raw buffers, please use your own copy method");
-                return;
-            }
-
-            if (count == -1)
-            {
-                if (Length != toBuffer.Length)
-                {
-                    Debug.LogError("Buffer length mismatch, please specify count");
-                    return;
-                }
-                count = Length;
-            }
-            switch (count)
-            {
-                case <= 0:
-                    return;
-                case > 1024 * ComputeLimits.MaxDispatchSize:
-                    Debug.LogError("Buffer copy count exceeds maximum dispatch size, please use your own copy method");
-                    return;
-            }
 
             var cs = _utilityProgram;
             var kernel = cs.FindKernel(count == 1 ? ComputeShaderUtility.CopyBuffer1KernelName : count <= 32 ? ComputeShaderUtility.CopyBuffer32KernelName : count <= 128 * ComputeLimits.MaxDispatchSize ? ComputeShaderUtility.CopyBuffer128KernelName : ComputeShaderUtility.CopyBuffer1024KernelName);
@@ -229,34 +268,8 @@ namespace Abecombe.GpuTools
 
         public void CopyTo(CommandBuffer cb, IGraphicsBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
         {
-            if (Stride != toBuffer.Stride)
-            {
-                Debug.LogError($"Stride mismatch, cannot copy from stride {Stride} to {toBuffer.Stride}.");
+            if (!TryPrepareCopy(toBuffer, fromBufferStartIndex, toBufferStartIndex, ref count))
                 return;
-            }
-            if (!BufferTarget.HasFlag(GraphicsBuffer.Target.Raw) || !toBuffer.BufferTarget.HasFlag(GraphicsBuffer.Target.Raw))
-            {
-                Debug.LogError("Copy kernel only supports Raw buffers, please use your own copy method");
-                return;
-            }
-
-            if (count == -1)
-            {
-                if (Length != toBuffer.Length)
-                {
-                    Debug.LogError("Buffer length mismatch, please specify count");
-                    return;
-                }
-                count = Length;
-            }
-            switch (count)
-            {
-                case <= 0:
-                    return;
-                case > 1024 * ComputeLimits.MaxDispatchSize:
-                    Debug.LogError("Buffer copy count exceeds maximum dispatch size, please use your own copy method");
-                    return;
-            }
 
             var cs = _utilityProgram;
             var kernel = cs.FindKernel(count == 1 ? ComputeShaderUtility.CopyBuffer1KernelName : count <= 32 ? ComputeShaderUtility.CopyBuffer32KernelName : count <= 128 * ComputeLimits.MaxDispatchSize ? ComputeShaderUtility.CopyBuffer128KernelName : ComputeShaderUtility.CopyBuffer1024KernelName);
@@ -279,34 +292,8 @@ namespace Abecombe.GpuTools
 
         public void CopyTo(IComputeCommandBuffer cb, IGraphicsBuffer toBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
         {
-            if (Stride != toBuffer.Stride)
-            {
-                Debug.LogError($"Stride mismatch, cannot copy from stride {Stride} to {toBuffer.Stride}.");
+            if (!TryPrepareCopy(toBuffer, fromBufferStartIndex, toBufferStartIndex, ref count))
                 return;
-            }
-            if (!BufferTarget.HasFlag(GraphicsBuffer.Target.Raw) || !toBuffer.BufferTarget.HasFlag(GraphicsBuffer.Target.Raw))
-            {
-                Debug.LogError("Copy kernel only supports Raw buffers, please use your own copy method");
-                return;
-            }
-
-            if (count == -1)
-            {
-                if (Length != toBuffer.Length)
-                {
-                    Debug.LogError("Buffer length mismatch, please specify count");
-                    return;
-                }
-                count = Length;
-            }
-            switch (count)
-            {
-                case <= 0:
-                    return;
-                case > 1024 * ComputeLimits.MaxDispatchSize:
-                    Debug.LogError("Buffer copy count exceeds maximum dispatch size, please use your own copy method");
-                    return;
-            }
 
             var cs = _utilityProgram;
             var kernel = cs.FindKernel(count == 1 ? ComputeShaderUtility.CopyBuffer1KernelName : count <= 32 ? ComputeShaderUtility.CopyBuffer32KernelName : count <= 128 * ComputeLimits.MaxDispatchSize ? ComputeShaderUtility.CopyBuffer128KernelName : ComputeShaderUtility.CopyBuffer1024KernelName);
@@ -337,9 +324,12 @@ namespace Abecombe.GpuTools
             if (Length > 1024 * ComputeLimits.MaxDispatchSize)
             {
                 Debug.LogError("Buffer clear count exceeds maximum dispatch size, please use your own clear method");
+                return;
             }
 
             var count = Length;
+            if (count <= 0)
+                return;
 
             var cs = _utilityProgram;
             var kernel = cs.FindKernel(count == 1 ? ComputeShaderUtility.ClearBuffer1KernelName : count <= 32 ? ComputeShaderUtility.ClearBuffer32KernelName : count <= 128 * ComputeLimits.MaxDispatchSize ? ComputeShaderUtility.ClearBuffer128KernelName : ComputeShaderUtility.ClearBuffer1024KernelName);
@@ -362,9 +352,12 @@ namespace Abecombe.GpuTools
             if (Length > 1024 * ComputeLimits.MaxDispatchSize)
             {
                 Debug.LogError("Buffer clear count exceeds maximum dispatch size, please use your own clear method");
+                return;
             }
 
             var count = Length;
+            if (count <= 0)
+                return;
 
             var cs = _utilityProgram;
             var kernel = cs.FindKernel(count == 1 ? ComputeShaderUtility.ClearBuffer1KernelName : count <= 32 ? ComputeShaderUtility.ClearBuffer32KernelName : count <= 128 * ComputeLimits.MaxDispatchSize ? ComputeShaderUtility.ClearBuffer128KernelName : ComputeShaderUtility.ClearBuffer1024KernelName);
@@ -387,9 +380,12 @@ namespace Abecombe.GpuTools
             if (Length > 1024 * ComputeLimits.MaxDispatchSize)
             {
                 Debug.LogError("Buffer clear count exceeds maximum dispatch size, please use your own clear method");
+                return;
             }
 
             var count = Length;
+            if (count <= 0)
+                return;
 
             var cs = _utilityProgram;
             var kernel = cs.FindKernel(count == 1 ? ComputeShaderUtility.ClearBuffer1KernelName : count <= 32 ? ComputeShaderUtility.ClearBuffer32KernelName : count <= 128 * ComputeLimits.MaxDispatchSize ? ComputeShaderUtility.ClearBuffer128KernelName : ComputeShaderUtility.ClearBuffer1024KernelName);
