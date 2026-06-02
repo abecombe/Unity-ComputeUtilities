@@ -15,6 +15,13 @@ Small runtime utilities for working with Unity `ComputeShader` and `GraphicsBuff
   - `ConstantBuffer<T>`
 - HLSL helpers for structured buffer metadata, append/consume buffers, counters, and direct/indirect dispatch bounds checks.
 
+## Installation
+
+1.  Open the Unity Package Manager
+2.  Click the **+** button
+3.  Select "**Add package from git URL...**"
+4.  Enter `https://github.com/abecombe/Unity-ComputeUtilities.git?path=Packages/com.abecombe.compute-utilities`
+
 ## Quick Start
 
 ```csharp
