@@ -47,7 +47,7 @@ namespace Abecombe.ComputeUtilities
             IsInitialized = true;
         }
 
-        public void UpdateBuffer(uint3 threadGroupSize)
+        public void UpdateBuffer(int3 threadGroupSize)
         {
             var cs = _utilityProgram;
             var kernel = cs.FindKernel(ComputeShaderUtility.BuildDispatchIndirectKernelName);
@@ -61,7 +61,7 @@ namespace Abecombe.ComputeUtilities
 
             kernel.DispatchDesired(3);
         }
-        public void UpdateBuffer(CommandBuffer cb, uint3 threadGroupSize)
+        public void UpdateBuffer(CommandBuffer cb, int3 threadGroupSize)
         {
             var cs = _utilityProgram;
             var kernel = cs.FindKernel(ComputeShaderUtility.BuildDispatchIndirectKernelName);
@@ -75,7 +75,7 @@ namespace Abecombe.ComputeUtilities
 
             kernel.DispatchDesired(cb, 3);
         }
-        public void UpdateBuffer(IComputeCommandBuffer cb, uint3 threadGroupSize)
+        public void UpdateBuffer(IComputeCommandBuffer cb, int3 threadGroupSize)
         {
             var cs = _utilityProgram;
             var kernel = cs.FindKernel(ComputeShaderUtility.BuildDispatchIndirectKernelName);
@@ -112,7 +112,7 @@ namespace Abecombe.ComputeUtilities
             if (updateBuffer) argsBuffer.UpdateBuffer(kernel.ThreadGroupSizes);
 
             kernel.SetBuffer(ComputeShaderUtility.DispatchThreadSizeBufferShaderPropertyID, argsBuffer.DispatchThreadSizeBuffer);
-            kernel.Program.DispatchIndirect(kernel, argsBuffer);
+            kernel.DispatchIndirect(argsBuffer);
         }
 
         public static void DispatchIndirectDesired(this ComputeKernel kernel, CommandBuffer cb, DispatchIndirectArgumentsBuffer argsBuffer, bool updateBuffer = true)
@@ -120,7 +120,7 @@ namespace Abecombe.ComputeUtilities
             if (updateBuffer) argsBuffer.UpdateBuffer(cb, kernel.ThreadGroupSizes);
 
             kernel.SetBuffer(cb, ComputeShaderUtility.DispatchThreadSizeBufferShaderPropertyID, argsBuffer.DispatchThreadSizeBuffer);
-            kernel.Program.DispatchIndirect(cb, kernel, argsBuffer);
+            kernel.DispatchIndirect(cb, argsBuffer);
         }
 
         public static void DispatchIndirectDesired(this ComputeKernel kernel, IComputeCommandBuffer cb, DispatchIndirectArgumentsBuffer argsBuffer, bool updateBuffer = true)
@@ -128,7 +128,7 @@ namespace Abecombe.ComputeUtilities
             if (updateBuffer) argsBuffer.UpdateBuffer(cb, kernel.ThreadGroupSizes);
 
             kernel.SetBuffer(cb, ComputeShaderUtility.DispatchThreadSizeBufferShaderPropertyID, argsBuffer.DispatchThreadSizeBuffer);
-            kernel.Program.DispatchIndirect(cb, kernel, argsBuffer);
+            kernel.DispatchIndirect(cb, argsBuffer);
         }
     }
 }

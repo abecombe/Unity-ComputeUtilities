@@ -73,9 +73,9 @@ namespace Abecombe.ComputeUtilities
 
         internal static bool ValidateSize(int3 size)
         {
-            if (size.x <= 0 || size.y <= 0 || size.z <= 0)
+            if (size.x < 0 || size.y < 0 || size.z < 0)
             {
-                Debug.LogError("StructuredBuffer size must be greater than zero in every dimension.");
+                Debug.LogError("StructuredBuffer size must be non-negative in every dimension.");
                 return false;
             }
 
@@ -226,15 +226,15 @@ namespace Abecombe.ComputeUtilities
 
         public void CopyFromReadToWrite()
         {
-            Buffer1.CopyTo(Buffer2);
+            Read.CopyTo(Write);
         }
         public void CopyFromReadToWrite(CommandBuffer cb)
         {
-            Buffer1.CopyTo(cb, Buffer2);
+            Read.CopyTo(cb, Write);
         }
         public void CopyFromReadToWrite(IComputeCommandBuffer cb)
         {
-            Buffer1.CopyTo(cb, Buffer2);
+            Read.CopyTo(cb, Write);
         }
     }
 
@@ -249,9 +249,8 @@ namespace Abecombe.ComputeUtilities
             cs.SetInts(propertyIDs[count++], buffer.Size);
             cs.SetInts(propertyIDs[count++], buffer.StartIndex);
             cs.SetInts(propertyIDs[count++], buffer.EndIndex);
-            cs.SetVector(propertyIDs[count++], buffer.PositionOffset);
-            cs.SetVector(propertyIDs[count++], (float3)0.5f - buffer.PositionOffset);
-            cs.SetVector(propertyIDs[count++], -buffer.PositionOffset);
+            cs.SetVector(propertyIDs[count++], buffer.PositionOffset); // IndexToPosition
+            cs.SetVector(propertyIDs[count++], (float3)0.5f - buffer.PositionOffset); // PositionToIndex
         }
         public static void SetStructuredBuffer(this ComputeKernel kernel, string name, IStructuredBuffer buffer)
         {
@@ -267,9 +266,8 @@ namespace Abecombe.ComputeUtilities
             cs.SetInts(cb, propertyIDs[count++], buffer.Size);
             cs.SetInts(cb, propertyIDs[count++], buffer.StartIndex);
             cs.SetInts(cb, propertyIDs[count++], buffer.EndIndex);
-            cs.SetVector(cb, propertyIDs[count++], buffer.PositionOffset);
-            cs.SetVector(cb, propertyIDs[count++], (float3)0.5f - buffer.PositionOffset);
-            cs.SetVector(cb, propertyIDs[count++], -buffer.PositionOffset);
+            cs.SetVector(cb, propertyIDs[count++], buffer.PositionOffset); // IndexToPosition
+            cs.SetVector(cb, propertyIDs[count++], (float3)0.5f - buffer.PositionOffset); // PositionToIndex
         }
         public static void SetStructuredBuffer(this ComputeKernel kernel, CommandBuffer cb, string name, IStructuredBuffer buffer)
         {
@@ -285,9 +283,8 @@ namespace Abecombe.ComputeUtilities
             cs.SetInts(cb, propertyIDs[count++], buffer.Size);
             cs.SetInts(cb, propertyIDs[count++], buffer.StartIndex);
             cs.SetInts(cb, propertyIDs[count++], buffer.EndIndex);
-            cs.SetVector(cb, propertyIDs[count++], buffer.PositionOffset);
-            cs.SetVector(cb, propertyIDs[count++], (float3)0.5f - buffer.PositionOffset);
-            cs.SetVector(cb, propertyIDs[count++], -buffer.PositionOffset);
+            cs.SetVector(cb, propertyIDs[count++], buffer.PositionOffset); // IndexToPosition
+            cs.SetVector(cb, propertyIDs[count++], (float3)0.5f - buffer.PositionOffset); // PositionToIndex
         }
         public static void SetStructuredBuffer(this ComputeKernel kernel, IComputeCommandBuffer cb, string name, IStructuredBuffer buffer)
         {

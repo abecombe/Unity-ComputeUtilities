@@ -69,7 +69,7 @@ namespace Abecombe.ComputeUtilities
 
         protected void InitBufferProgram()
         {
-            Data = new GraphicsBuffer(BufferTarget, Length, Marshal.SizeOf(typeof(T)));
+            Data = new GraphicsBuffer(BufferTarget, Mathf.Max(1, Length), Marshal.SizeOf(typeof(T)));
             var utilityShader = ComputeShaderUtility.LoadUtilityShader();
             _utilityShaderInstance = utilityShader == null ? null : Object.Instantiate(utilityShader);
             _utilityProgram.Init(_utilityShaderInstance);

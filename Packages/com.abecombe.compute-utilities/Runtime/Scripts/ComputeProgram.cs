@@ -1049,7 +1049,6 @@ namespace Abecombe.ComputeUtilities
         {
             SetRayTracingAccelerationStructure(kernel.Index, id, rtas);
         }
-
         public void SetRayTracingAccelerationStructure(int kernelIndex, string name, RayTracingAccelerationStructure rtas)
         {
             Shader.SetRayTracingAccelerationStructure(kernelIndex, name, rtas);
@@ -1067,7 +1066,6 @@ namespace Abecombe.ComputeUtilities
         {
             SetRayTracingAccelerationStructure(cb, kernel.Index, id, rtas);
         }
-
         public void SetRayTracingAccelerationStructure(CommandBuffer cb, int kernelIndex, string name, RayTracingAccelerationStructure rtas)
         {
             cb.SetRayTracingAccelerationStructure(Shader, kernelIndex, name, rtas);
@@ -1085,7 +1083,6 @@ namespace Abecombe.ComputeUtilities
         {
             SetRayTracingAccelerationStructure(cb, kernel.Index, id, rtas);
         }
-
         public void SetRayTracingAccelerationStructure(IComputeCommandBuffer cb, int kernelIndex, string name, RayTracingAccelerationStructure rtas)
         {
             cb.SetRayTracingAccelerationStructure(Shader, kernelIndex, name, rtas);
@@ -1182,15 +1179,15 @@ namespace Abecombe.ComputeUtilities
         #endregion
 
         #region DispatchIndirect
-        public void DispatchIndirect(int kernelIndex, GraphicsBuffer argsBuffer)
+        public void DispatchIndirect(int kernelIndex, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
             DisableKeyword(ComputeShaderUtility.DirectDispatch);
             EnableKeyword(ComputeShaderUtility.IndirectDispatch);
-            Shader.DispatchIndirect(kernelIndex, argsBuffer);
+            Shader.DispatchIndirect(kernelIndex, argsBuffer, argsOffset);
         }
-        public void DispatchIndirect(ComputeKernel kernel, GraphicsBuffer argsBuffer)
+        public void DispatchIndirect(ComputeKernel kernel, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
-            DispatchIndirect(kernel.Index, argsBuffer);
+            DispatchIndirect(kernel.Index, argsBuffer, argsOffset);
         }
 
         public void DispatchIndirect(CommandBuffer cb, int kernelIndex, GraphicsBuffer argsBuffer, uint argsOffset = 0)

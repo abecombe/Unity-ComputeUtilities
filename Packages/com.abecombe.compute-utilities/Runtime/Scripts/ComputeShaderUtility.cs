@@ -24,7 +24,6 @@ namespace Abecombe.ComputeUtilities
 
         // for GraphicsBufferBase
         internal const string ComputeShaderConfigPath = "ComputeUtilities/ComputeShaderConfig";
-        internal const string UtilityShaderResourcePath = "ComputeUtilities/ComputeUtilities";
         internal const string CopyBuffer1KernelName = "CopyBuffer1";
         internal const string CopyBuffer32KernelName = "CopyBuffer32";
         internal const string CopyBuffer128KernelName = "CopyBuffer128";
@@ -42,7 +41,7 @@ namespace Abecombe.ComputeUtilities
         internal static readonly int BufferShaderPropertyID = Shader.PropertyToID("_Buffer");
 
         // for StructuredBuffer
-        internal static readonly string[] StructuredBufferConcatNames = { "", "Length", "Size", "StartIndex", "EndIndex", "IndexToPosition", "PositionToIndex", "PositionToFloorIndex" };
+        internal static readonly string[] StructuredBufferConcatNames = { "", "Length", "Size", "StartIndex", "EndIndex", "IndexToPosition", "PositionToIndex" };
 
         // for IndirectArgumentsBuffer
         internal static readonly string[] IndirectArgumentsBufferConcatNames = { "", "CountBufferOffset", "CountBufferSize" };
@@ -61,15 +60,11 @@ namespace Abecombe.ComputeUtilities
 
         internal static ComputeShader LoadUtilityShader()
         {
-            var config = Resources.Load<ComputeShaderConfig>(ComputeShaderConfigPath);
-            if (config != null && config.UtilityShader != null)
-                return config.UtilityShader;
+            var shader = Resources.Load<ComputeShaderConfig>(ComputeShaderConfigPath)?.UtilityShader;
 
-            var shader = Resources.Load<ComputeShader>(UtilityShaderResourcePath);
             if (shader == null)
-            {
-                Debug.LogError($"Could not load utility compute shader. Expected a ComputeShaderConfig at Resources/{ComputeShaderConfigPath} or a ComputeShader at Resources/{UtilityShaderResourcePath}.");
-            }
+                Debug.LogError($"Could not load utility compute shader. Expected a ComputeShaderConfig at Resources/{ComputeShaderConfigPath}.");
+
             return shader;
         }
 

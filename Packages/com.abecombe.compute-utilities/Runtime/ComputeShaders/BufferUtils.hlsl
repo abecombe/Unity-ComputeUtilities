@@ -9,7 +9,6 @@ int3 BUFFER##StartIndex;\
 int3 BUFFER##EndIndex;\
 float3 BUFFER##IndexToPosition;\
 float3 BUFFER##PositionToIndex;\
-float3 BUFFER##PositionToFloorIndex;\
 
 #define BUFFER_SIZE(BUFFER)\
 BUFFER##Size\
@@ -49,10 +48,10 @@ IndexToID##BUFFER(INDEX)\
 IndexToID##BUFFER(POSITION_TO_INDEX(BUFFER, POSITION))\
 
 #define POSITION_TO_FLOOR_INDEX(BUFFER, POSITION)\
-(floor(POSITION + BUFFER##PositionToFloorIndex))\
+(floor(POSITION + BUFFER##PositionToIndex - 0.5f))\
 
 #define POSITION_TO_FLOOR_INDEX_RATIO(BUFFER, POSITION)\
-(1 - frac(POSITION + BUFFER##PositionToFloorIndex))\
+(1 - frac(POSITION + BUFFER##PositionToIndex - 0.5f))\
 
 #define FUNCTION_READ_DATA(BUFFER, TYPE)\
 inline TYPE ReadData##BUFFER(uint id)\
@@ -187,7 +186,7 @@ BUFFER.IncrementCounter()\
 #define DECREMENT_COUNTER(BUFFER)\
 BUFFER.DecrementCounter()\
 
-// ShaderConstantBuffer
+// ConstantBuffer
 #define CONSTANT_BUFFER(TYPE, BUFFER)\
 ConstantBuffer<TYPE> BUFFER;\
 

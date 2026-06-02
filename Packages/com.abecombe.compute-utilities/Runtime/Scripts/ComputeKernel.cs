@@ -10,10 +10,10 @@ namespace Abecombe.ComputeUtilities
         public ComputeProgram Program { get; }
         public string Name { get; }
         public int Index { get; }
-        public uint3 ThreadGroupSizes { get; private set; }
-        public uint ThreadGroupSizeX => ThreadGroupSizes.x;
-        public uint ThreadGroupSizeY => ThreadGroupSizes.y;
-        public uint ThreadGroupSizeZ => ThreadGroupSizes.z;
+        public int3 ThreadGroupSizes { get; private set; }
+        public int ThreadGroupSizeX => ThreadGroupSizes.x;
+        public int ThreadGroupSizeY => ThreadGroupSizes.y;
+        public int ThreadGroupSizeZ => ThreadGroupSizes.z;
 
         public ComputeKernel(ComputeProgram program, string name)
         {
@@ -21,7 +21,7 @@ namespace Abecombe.ComputeUtilities
             Name = name;
             Index = program.Shader.FindKernel(name);
             program.Shader.GetKernelThreadGroupSizes(Index, out var threadGroupSizeX, out var threadGroupSizeY, out var threadGroupSizeZ);
-            ThreadGroupSizes = new uint3(threadGroupSizeX, threadGroupSizeY, threadGroupSizeZ);
+            ThreadGroupSizes = new int3((int)threadGroupSizeX, (int)threadGroupSizeY, (int)threadGroupSizeZ);
         }
 
         #region SetBool
@@ -107,6 +107,18 @@ namespace Abecombe.ComputeUtilities
         #endregion
 
         #region SetInts
+        public void SetInts(int id, int x, int y)
+        {
+            Program.SetInts(id, x, y);
+        }
+        public void SetInts(int id, int x, int y, int z)
+        {
+            Program.SetInts(id, x, y, z);
+        }
+        public void SetInts(int id, int x, int y, int z, int w)
+        {
+            Program.SetInts(id, x, y, z, w);
+        }
         public void SetInts(int id, int2 value)
         {
             Program.SetInts(id, value);
@@ -142,6 +154,18 @@ namespace Abecombe.ComputeUtilities
         public void SetInts(int id, uint4 value)
         {
             Program.SetInts(id, value);
+        }
+        public void SetInts(string name, int x, int y)
+        {
+            Program.SetInts(name, x, y);
+        }
+        public void SetInts(string name, int x, int y, int z)
+        {
+            Program.SetInts(name, x, y, z);
+        }
+        public void SetInts(string name, int x, int y, int z, int w)
+        {
+            Program.SetInts(name, x, y, z, w);
         }
         public void SetInts(string name, int2 value)
         {
@@ -180,6 +204,18 @@ namespace Abecombe.ComputeUtilities
             Program.SetInts(name, value);
         }
 
+        public void SetInts(CommandBuffer cb, int id, int x, int y)
+        {
+            Program.SetInts(cb, id, x, y);
+        }
+        public void SetInts(CommandBuffer cb, int id, int x, int y, int z)
+        {
+            Program.SetInts(cb, id, x, y, z);
+        }
+        public void SetInts(CommandBuffer cb, int id, int x, int y, int z, int w)
+        {
+            Program.SetInts(cb, id, x, y, z, w);
+        }
         public void SetInts(CommandBuffer cb, int id, int2 value)
         {
             Program.SetInts(cb, id, value);
@@ -215,6 +251,18 @@ namespace Abecombe.ComputeUtilities
         public void SetInts(CommandBuffer cb, int id, uint4 value)
         {
             Program.SetInts(cb, id, value);
+        }
+        public void SetInts(CommandBuffer cb, string name, int x, int y)
+        {
+            Program.SetInts(cb, name, x, y);
+        }
+        public void SetInts(CommandBuffer cb, string name, int x, int y, int z)
+        {
+            Program.SetInts(cb, name, x, y, z);
+        }
+        public void SetInts(CommandBuffer cb, string name, int x, int y, int z, int w)
+        {
+            Program.SetInts(cb, name, x, y, z, w);
         }
         public void SetInts(CommandBuffer cb, string name, int2 value)
         {
@@ -253,6 +301,18 @@ namespace Abecombe.ComputeUtilities
             Program.SetInts(cb, name, value);
         }
 
+        public void SetInts(IComputeCommandBuffer cb, int id, int x, int y)
+        {
+            Program.SetInts(cb, id, x, y);
+        }
+        public void SetInts(IComputeCommandBuffer cb, int id, int x, int y, int z)
+        {
+            Program.SetInts(cb, id, x, y, z);
+        }
+        public void SetInts(IComputeCommandBuffer cb, int id, int x, int y, int z, int w)
+        {
+            Program.SetInts(cb, id, x, y, z, w);
+        }
         public void SetInts(IComputeCommandBuffer cb, int id, int2 value)
         {
             Program.SetInts(cb, id, value);
@@ -288,6 +348,18 @@ namespace Abecombe.ComputeUtilities
         public void SetInts(IComputeCommandBuffer cb, int id, uint4 value)
         {
             Program.SetInts(cb, id, value);
+        }
+        public void SetInts(IComputeCommandBuffer cb, string name, int x, int y)
+        {
+            Program.SetInts(cb, name, x, y);
+        }
+        public void SetInts(IComputeCommandBuffer cb, string name, int x, int y, int z)
+        {
+            Program.SetInts(cb, name, x, y, z);
+        }
+        public void SetInts(IComputeCommandBuffer cb, string name, int x, int y, int z, int w)
+        {
+            Program.SetInts(cb, name, x, y, z, w);
         }
         public void SetInts(IComputeCommandBuffer cb, string name, int2 value)
         {
@@ -722,7 +794,6 @@ namespace Abecombe.ComputeUtilities
         {
             Program.SetRayTracingAccelerationStructure(this, id, rtas);
         }
-
         public void SetRayTracingAccelerationStructure(string name, RayTracingAccelerationStructure rtas)
         {
             Program.SetRayTracingAccelerationStructure(this, name, rtas);
@@ -732,7 +803,6 @@ namespace Abecombe.ComputeUtilities
         {
             Program.SetRayTracingAccelerationStructure(cb, this, id, rtas);
         }
-
         public void SetRayTracingAccelerationStructure(CommandBuffer cb, string name, RayTracingAccelerationStructure rtas)
         {
             Program.SetRayTracingAccelerationStructure(cb, this, name, rtas);
@@ -742,7 +812,6 @@ namespace Abecombe.ComputeUtilities
         {
             Program.SetRayTracingAccelerationStructure(cb, this, id, rtas);
         }
-
         public void SetRayTracingAccelerationStructure(IComputeCommandBuffer cb, string name, RayTracingAccelerationStructure rtas)
         {
             Program.SetRayTracingAccelerationStructure(cb, this, name, rtas);
@@ -750,9 +819,43 @@ namespace Abecombe.ComputeUtilities
         #endregion
 
         #region Dispatch
-        private static int GetThreadGroupCount(int size, uint threadGroupSize)
+        public void Dispatch(int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            var safeThreadGroupSize = System.Math.Max(1L, threadGroupSize);
+            Program.Dispatch(this, threadGroupsX, threadGroupsY, threadGroupsZ);
+        }
+
+        public void Dispatch(CommandBuffer cb, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        {
+            Program.Dispatch(cb, this, threadGroupsX, threadGroupsY, threadGroupsZ);
+        }
+
+        public void Dispatch(IComputeCommandBuffer cb, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        {
+            Program.Dispatch(cb, this, threadGroupsX, threadGroupsY, threadGroupsZ);
+        }
+        #endregion
+
+        #region DispatchIndirect
+        public void DispatchIndirect(GraphicsBuffer argsBuffer, uint argsOffset = 0)
+        {
+            Program.DispatchIndirect(this, argsBuffer, argsOffset);
+        }
+
+        public void DispatchIndirect(CommandBuffer cb, GraphicsBuffer argsBuffer, uint argsOffset = 0)
+        {
+            Program.DispatchIndirect(cb, this, argsBuffer, argsOffset);
+        }
+
+        public void DispatchIndirect(IComputeCommandBuffer cb, GraphicsBuffer argsBuffer, uint argsOffset = 0)
+        {
+            Program.DispatchIndirect(cb, this, argsBuffer, argsOffset);
+        }
+        #endregion
+
+        #region DispatchDesired
+        private static int GetThreadGroupCount(int size, int threadGroupSize)
+        {
+            var safeThreadGroupSize = Mathf.Max(1, threadGroupSize);
             return (int)(((long)size + safeThreadGroupSize - 1) / safeThreadGroupSize);
         }
 
@@ -789,8 +892,8 @@ namespace Abecombe.ComputeUtilities
             if (!TryGetDispatchGroupSizes(sizeX, sizeY, sizeZ, out var groupSizeX, out var groupSizeY, out var groupSizeZ))
                 return;
 
-            Program.SetInts(ComputeShaderUtility.DispatchThreadSizeShaderPropertyID, sizeX, sizeY, sizeZ);
-            Program.Dispatch(this, groupSizeX, groupSizeY, groupSizeZ);
+            SetInts(ComputeShaderUtility.DispatchThreadSizeShaderPropertyID, sizeX, sizeY, sizeZ);
+            Dispatch(groupSizeX, groupSizeY, groupSizeZ);
         }
         public void DispatchDesired(int2 size)
         {
@@ -806,8 +909,8 @@ namespace Abecombe.ComputeUtilities
             if (!TryGetDispatchGroupSizes(sizeX, sizeY, sizeZ, out var groupSizeX, out var groupSizeY, out var groupSizeZ))
                 return;
 
-            Program.SetInts(cb, ComputeShaderUtility.DispatchThreadSizeShaderPropertyID, sizeX, sizeY, sizeZ);
-            Program.Dispatch(cb, this, groupSizeX, groupSizeY, groupSizeZ);
+            SetInts(cb, ComputeShaderUtility.DispatchThreadSizeShaderPropertyID, sizeX, sizeY, sizeZ);
+            Dispatch(cb, groupSizeX, groupSizeY, groupSizeZ);
         }
         public void DispatchDesired(CommandBuffer cb, int2 size)
         {
@@ -823,8 +926,8 @@ namespace Abecombe.ComputeUtilities
             if (!TryGetDispatchGroupSizes(sizeX, sizeY, sizeZ, out var groupSizeX, out var groupSizeY, out var groupSizeZ))
                 return;
 
-            Program.SetInts(cb, ComputeShaderUtility.DispatchThreadSizeShaderPropertyID, sizeX, sizeY, sizeZ);
-            Program.Dispatch(cb, this, groupSizeX, groupSizeY, groupSizeZ);
+            SetInts(cb, ComputeShaderUtility.DispatchThreadSizeShaderPropertyID, sizeX, sizeY, sizeZ);
+            Dispatch(cb, groupSizeX, groupSizeY, groupSizeZ);
         }
         public void DispatchDesired(IComputeCommandBuffer cb, int2 size)
         {
