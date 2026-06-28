@@ -259,7 +259,7 @@ namespace Abecombe.ComputeUtilities
             kernel.SetBuffer(ComputeShaderUtility.FromBufferShaderPropertyID, Data);
             kernel.SetBuffer(ComputeShaderUtility.ToBufferShaderPropertyID, toBuffer.Data);
 
-            kernel.DispatchDesired(count);
+            kernel.DispatchThreads(count);
         }
         public void CopyFrom(IGraphicsBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
         {
@@ -283,7 +283,7 @@ namespace Abecombe.ComputeUtilities
             kernel.SetBuffer(cb, ComputeShaderUtility.FromBufferShaderPropertyID, Data);
             kernel.SetBuffer(cb, ComputeShaderUtility.ToBufferShaderPropertyID, toBuffer.Data);
 
-            kernel.DispatchDesired(cb, count);
+            kernel.DispatchThreads(cb, count);
         }
         public void CopyFrom(CommandBuffer cb, IGraphicsBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
         {
@@ -307,7 +307,7 @@ namespace Abecombe.ComputeUtilities
             kernel.SetBuffer(cb, ComputeShaderUtility.FromBufferShaderPropertyID, Data);
             kernel.SetBuffer(cb, ComputeShaderUtility.ToBufferShaderPropertyID, toBuffer.Data);
 
-            kernel.DispatchDesired(cb, count);
+            kernel.DispatchThreads(cb, count);
         }
         public void CopyFrom(IComputeCommandBuffer cb, IGraphicsBuffer fromBuffer, int fromBufferStartIndex = 0, int toBufferStartIndex = 0, int count = -1)
         {
@@ -340,7 +340,7 @@ namespace Abecombe.ComputeUtilities
             cs.SetInt(ComputeShaderUtility.BufferUIntCountShaderPropertyID, count * uintScaling);
             kernel.SetBuffer(ComputeShaderUtility.BufferShaderPropertyID, Data);
 
-            kernel.DispatchDesired(count);
+            kernel.DispatchThreads(count);
         }
         public void Clear(CommandBuffer cb)
         {
@@ -368,7 +368,7 @@ namespace Abecombe.ComputeUtilities
             cs.SetInt(cb, ComputeShaderUtility.BufferUIntCountShaderPropertyID, count * uintScaling);
             kernel.SetBuffer(cb, ComputeShaderUtility.BufferShaderPropertyID, Data);
 
-            kernel.DispatchDesired(cb, count);
+            kernel.DispatchThreads(cb, count);
         }
         public void Clear(IComputeCommandBuffer cb)
         {
@@ -396,7 +396,7 @@ namespace Abecombe.ComputeUtilities
             cs.SetInt(cb, ComputeShaderUtility.BufferUIntCountShaderPropertyID, count * uintScaling);
             kernel.SetBuffer(cb, ComputeShaderUtility.BufferShaderPropertyID, Data);
 
-            kernel.DispatchDesired(cb, count);
+            kernel.DispatchThreads(cb, count);
         }
 
         public static implicit operator GraphicsBuffer(GraphicsBufferBase<T> buffer)

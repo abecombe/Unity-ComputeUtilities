@@ -1143,38 +1143,38 @@ namespace Abecombe.ComputeUtilities
         }
         #endregion
 
-        #region Dispatch
-        public void Dispatch(int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        #region DispatchGroups
+        public void DispatchGroups(int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
             EnableKeyword(ComputeShaderUtility.DirectDispatch);
             DisableKeyword(ComputeShaderUtility.IndirectDispatch);
             Shader.Dispatch(kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
-        public void Dispatch(ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        public void DispatchGroups(ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            Dispatch(kernel.Index, threadGroupsX, threadGroupsY, threadGroupsZ);
+            DispatchGroups(kernel.Index, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
 
-        public void Dispatch(CommandBuffer cb, int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        public void DispatchGroups(CommandBuffer cb, int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
             EnableKeyword(cb, ComputeShaderUtility.DirectDispatch);
             DisableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
             cb.DispatchCompute(Shader, kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
-        public void Dispatch(CommandBuffer cb, ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        public void DispatchGroups(CommandBuffer cb, ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            Dispatch(cb, kernel.Index, threadGroupsX, threadGroupsY, threadGroupsZ);
+            DispatchGroups(cb, kernel.Index, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
 
-        public void Dispatch(IComputeCommandBuffer cb, int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        public void DispatchGroups(IComputeCommandBuffer cb, int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
             EnableKeyword(cb, ComputeShaderUtility.DirectDispatch);
             DisableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
             cb.DispatchCompute(Shader, kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
-        public void Dispatch(IComputeCommandBuffer cb, ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        public void DispatchGroups(IComputeCommandBuffer cb, ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            Dispatch(cb, kernel.Index, threadGroupsX, threadGroupsY, threadGroupsZ);
+            DispatchGroups(cb, kernel.Index, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
         #endregion
 

@@ -5,7 +5,7 @@ Small runtime utilities for working with Unity `ComputeShader` and `GraphicsBuff
 ## Features
 
 - `ComputeProgram` and `ComputeKernel` wrappers for kernel and property ID caching.
-- `DispatchDesired` for dispatching by desired thread count instead of thread group count.
+- `DispatchThreads` for dispatching by thread count instead of thread group count.
 - Buffer wrappers for common compute workflows:
   - `StructuredBuffer<T>`
   - `AppendConsumeBuffer<T>`
@@ -43,7 +43,7 @@ public class ComputeExample : MonoBehaviour
 
         _points.Init(1024);
         _kernel.SetStructuredBuffer("_Points", _points);
-        _kernel.DispatchDesired(_points.Length);
+        _kernel.DispatchThreads(_points.Length);
     }
 
     private void OnDestroy()
@@ -80,7 +80,7 @@ void Main(uint3 id : SV_DispatchThreadID)
 }
 ```
 
-`DispatchDesired` sets `_DispatchThreadSize` for direct dispatch. It returns without dispatching when any requested dimension is `0`, and logs an error for negative sizes. `DispatchIndirectDesired` switches to the `INDIRECT_DISPATCH` keyword, so the same `RETURN_IF_INVALID_THREAD` macro works for indirect dispatch.
+`DispatchThreads` sets `_DispatchThreadSize` for direct dispatch. It returns without dispatching when any requested dimension is `0`, and logs an error for negative sizes. `DispatchIndirectThreads` switches to the `INDIRECT_DISPATCH` keyword, so the same `RETURN_IF_INVALID_THREAD` macro works for indirect dispatch.
 
 ## StructuredBuffer
 
@@ -91,7 +91,7 @@ var cells = new StructuredBuffer<float4>();
 cells.Init(new int3(32, 32, 8));
 
 kernel.SetStructuredBuffer("_Cells", cells);
-kernel.DispatchDesired(cells.Size);
+kernel.DispatchThreads(cells.Size);
 ```
 
 In HLSL:
@@ -112,7 +112,7 @@ var hits = new AppendConsumeBuffer<int>();
 hits.Init(4096);
 
 kernel.SetAppendBuffer("_Hits", hits, resetBuffer: true);
-kernel.DispatchDesired(1024);
+kernel.DispatchThreads(1024);
 
 uint count = hits.GetCounterValue();
 ```
@@ -136,7 +136,7 @@ var args = new IndirectArgumentsBuffer();
 args.Init(new uint[] { 0, 1, 1 }, countBufferOffset: 0, countBufferSize: 1);
 
 args.SetCount(1024);
-kernel.DispatchIndirectDesired(args.DispatchIndirectArgumentsBuffer);
+kernel.DispatchIndirectThreads(args.DispatchIndirectArgumentsBuffer);
 ```
 
 ## Internal Compute Utilities

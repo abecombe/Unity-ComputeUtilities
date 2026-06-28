@@ -818,20 +818,20 @@ namespace Abecombe.ComputeUtilities
         }
         #endregion
 
-        #region Dispatch
-        public void Dispatch(int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        #region DispatchGroups
+        public void DispatchGroups(int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            Program.Dispatch(this, threadGroupsX, threadGroupsY, threadGroupsZ);
+            Program.DispatchGroups(this, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
 
-        public void Dispatch(CommandBuffer cb, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        public void DispatchGroups(CommandBuffer cb, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            Program.Dispatch(cb, this, threadGroupsX, threadGroupsY, threadGroupsZ);
+            Program.DispatchGroups(cb, this, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
 
-        public void Dispatch(IComputeCommandBuffer cb, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
+        public void DispatchGroups(IComputeCommandBuffer cb, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            Program.Dispatch(cb, this, threadGroupsX, threadGroupsY, threadGroupsZ);
+            Program.DispatchGroups(cb, this, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
         #endregion
 
@@ -852,90 +852,90 @@ namespace Abecombe.ComputeUtilities
         }
         #endregion
 
-        #region DispatchDesired
+        #region DispatchThreads
         private static int GetThreadGroupCount(int size, int threadGroupSize)
         {
             var safeThreadGroupSize = Mathf.Max(1, threadGroupSize);
             return (int)(((long)size + safeThreadGroupSize - 1) / safeThreadGroupSize);
         }
 
-        private bool TryGetDispatchGroupSizes(int sizeX, int sizeY, int sizeZ, out int groupSizeX, out int groupSizeY, out int groupSizeZ)
+        private bool TryGetDispatchGroupCounts(int sizeX, int sizeY, int sizeZ, out int groupCountX, out int groupCountY, out int groupCountZ)
         {
-            groupSizeX = 0;
-            groupSizeY = 0;
-            groupSizeZ = 0;
+            groupCountX = 0;
+            groupCountY = 0;
+            groupCountZ = 0;
 
             if (sizeX < 0 || sizeY < 0 || sizeZ < 0)
             {
-                Debug.LogError("Dispatch size must be zero or greater.");
+                Debug.LogError("Dispatch thread size must be zero or greater.");
                 return false;
             }
 
             if (sizeX == 0 || sizeY == 0 || sizeZ == 0)
                 return false;
 
-            groupSizeX = GetThreadGroupCount(sizeX, ThreadGroupSizeX);
-            groupSizeY = GetThreadGroupCount(sizeY, ThreadGroupSizeY);
-            groupSizeZ = GetThreadGroupCount(sizeZ, ThreadGroupSizeZ);
+            groupCountX = GetThreadGroupCount(sizeX, ThreadGroupSizeX);
+            groupCountY = GetThreadGroupCount(sizeY, ThreadGroupSizeY);
+            groupCountZ = GetThreadGroupCount(sizeZ, ThreadGroupSizeZ);
 
-            if (groupSizeX > ComputeLimits.MaxDispatchSize || groupSizeY > ComputeLimits.MaxDispatchSize || groupSizeZ > ComputeLimits.MaxDispatchSize)
+            if (groupCountX > ComputeLimits.MaxDispatchSize || groupCountY > ComputeLimits.MaxDispatchSize || groupCountZ > ComputeLimits.MaxDispatchSize)
             {
-                Debug.LogError("Dispatch size exceeds maximum dispatch size.");
+                Debug.LogError("Dispatch group count exceeds maximum dispatch size.");
                 return false;
             }
 
             return true;
         }
 
-        public void DispatchDesired(int sizeX, int sizeY = 1, int sizeZ = 1)
+        public void DispatchThreads(int sizeX, int sizeY = 1, int sizeZ = 1)
         {
-            if (!TryGetDispatchGroupSizes(sizeX, sizeY, sizeZ, out var groupSizeX, out var groupSizeY, out var groupSizeZ))
+            if (!TryGetDispatchGroupCounts(sizeX, sizeY, sizeZ, out var groupCountX, out var groupCountY, out var groupCountZ))
                 return;
 
             SetInts(ComputeShaderUtility.DispatchThreadSizeShaderPropertyID, sizeX, sizeY, sizeZ);
-            Dispatch(groupSizeX, groupSizeY, groupSizeZ);
+            DispatchGroups(groupCountX, groupCountY, groupCountZ);
         }
-        public void DispatchDesired(int2 size)
+        public void DispatchThreads(int2 size)
         {
-            DispatchDesired(size.x, size.y);
+            DispatchThreads(size.x, size.y);
         }
-        public void DispatchDesired(int3 size)
+        public void DispatchThreads(int3 size)
         {
-            DispatchDesired(size.x, size.y, size.z);
+            DispatchThreads(size.x, size.y, size.z);
         }
 
-        public void DispatchDesired(CommandBuffer cb, int sizeX, int sizeY = 1, int sizeZ = 1)
+        public void DispatchThreads(CommandBuffer cb, int sizeX, int sizeY = 1, int sizeZ = 1)
         {
-            if (!TryGetDispatchGroupSizes(sizeX, sizeY, sizeZ, out var groupSizeX, out var groupSizeY, out var groupSizeZ))
+            if (!TryGetDispatchGroupCounts(sizeX, sizeY, sizeZ, out var groupCountX, out var groupCountY, out var groupCountZ))
                 return;
 
             SetInts(cb, ComputeShaderUtility.DispatchThreadSizeShaderPropertyID, sizeX, sizeY, sizeZ);
-            Dispatch(cb, groupSizeX, groupSizeY, groupSizeZ);
+            DispatchGroups(cb, groupCountX, groupCountY, groupCountZ);
         }
-        public void DispatchDesired(CommandBuffer cb, int2 size)
+        public void DispatchThreads(CommandBuffer cb, int2 size)
         {
-            DispatchDesired(cb, size.x, size.y);
+            DispatchThreads(cb, size.x, size.y);
         }
-        public void DispatchDesired(CommandBuffer cb, int3 size)
+        public void DispatchThreads(CommandBuffer cb, int3 size)
         {
-            DispatchDesired(cb, size.x, size.y, size.z);
+            DispatchThreads(cb, size.x, size.y, size.z);
         }
 
-        public void DispatchDesired(IComputeCommandBuffer cb, int sizeX, int sizeY = 1, int sizeZ = 1)
+        public void DispatchThreads(IComputeCommandBuffer cb, int sizeX, int sizeY = 1, int sizeZ = 1)
         {
-            if (!TryGetDispatchGroupSizes(sizeX, sizeY, sizeZ, out var groupSizeX, out var groupSizeY, out var groupSizeZ))
+            if (!TryGetDispatchGroupCounts(sizeX, sizeY, sizeZ, out var groupCountX, out var groupCountY, out var groupCountZ))
                 return;
 
             SetInts(cb, ComputeShaderUtility.DispatchThreadSizeShaderPropertyID, sizeX, sizeY, sizeZ);
-            Dispatch(cb, groupSizeX, groupSizeY, groupSizeZ);
+            DispatchGroups(cb, groupCountX, groupCountY, groupCountZ);
         }
-        public void DispatchDesired(IComputeCommandBuffer cb, int2 size)
+        public void DispatchThreads(IComputeCommandBuffer cb, int2 size)
         {
-            DispatchDesired(cb, size.x, size.y);
+            DispatchThreads(cb, size.x, size.y);
         }
-        public void DispatchDesired(IComputeCommandBuffer cb, int3 size)
+        public void DispatchThreads(IComputeCommandBuffer cb, int3 size)
         {
-            DispatchDesired(cb, size.x, size.y, size.z);
+            DispatchThreads(cb, size.x, size.y, size.z);
         }
         #endregion
     }
