@@ -107,7 +107,7 @@ namespace Abecombe.ComputeUtilities
 
     public static class DispatchIndirectArgumentsBufferExtensions
     {
-        public static void DispatchIndirectThreads(this ComputeKernel kernel, DispatchIndirectArgumentsBuffer argsBuffer, bool updateBuffer = true)
+        public static void DispatchThreadsIndirect(this ComputeKernel kernel, DispatchIndirectArgumentsBuffer argsBuffer, bool updateBuffer = true)
         {
             if (updateBuffer) argsBuffer.UpdateBuffer(kernel.ThreadGroupSizes);
 
@@ -115,7 +115,7 @@ namespace Abecombe.ComputeUtilities
             kernel.DispatchIndirect(argsBuffer);
         }
 
-        public static void DispatchIndirectThreads(this ComputeKernel kernel, CommandBuffer cb, DispatchIndirectArgumentsBuffer argsBuffer, bool updateBuffer = true)
+        public static void DispatchThreadsIndirect(this ComputeKernel kernel, CommandBuffer cb, DispatchIndirectArgumentsBuffer argsBuffer, bool updateBuffer = true)
         {
             if (updateBuffer) argsBuffer.UpdateBuffer(cb, kernel.ThreadGroupSizes);
 
@@ -123,7 +123,7 @@ namespace Abecombe.ComputeUtilities
             kernel.DispatchIndirect(cb, argsBuffer);
         }
 
-        public static void DispatchIndirectThreads(this ComputeKernel kernel, IComputeCommandBuffer cb, DispatchIndirectArgumentsBuffer argsBuffer, bool updateBuffer = true)
+        public static void DispatchThreadsIndirect(this ComputeKernel kernel, IComputeCommandBuffer cb, DispatchIndirectArgumentsBuffer argsBuffer, bool updateBuffer = true)
         {
             if (updateBuffer) argsBuffer.UpdateBuffer(cb, kernel.ThreadGroupSizes);
 

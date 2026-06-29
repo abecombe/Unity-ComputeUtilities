@@ -80,7 +80,7 @@ void Main(uint3 id : SV_DispatchThreadID)
 }
 ```
 
-`DispatchThreads` sets `_DispatchThreadSize` for direct dispatch. It returns without dispatching when any requested dimension is `0`, and logs an error for negative sizes. `DispatchIndirectThreads` switches to the `INDIRECT_DISPATCH` keyword, so the same `RETURN_IF_INVALID_THREAD` macro works for indirect dispatch.
+`DispatchThreads` sets `_DispatchThreadSize` for direct dispatch. It returns without dispatching when any requested dimension is `0`, and logs an error for negative sizes. `DispatchThreadsIndirect` switches to the `INDIRECT_DISPATCH` keyword, so the same `RETURN_IF_INVALID_THREAD` macro works for indirect dispatch.
 
 ## StructuredBuffer
 
@@ -136,7 +136,7 @@ var args = new IndirectArgumentsBuffer();
 args.Init(new uint[] { 0, 1, 1 }, countBufferOffset: 0, countBufferSize: 1);
 
 args.SetCount(1024);
-kernel.DispatchIndirectThreads(args.DispatchIndirectArgumentsBuffer);
+kernel.DispatchThreadsIndirect(args.DispatchIndirectArgumentsBuffer);
 ```
 
 ## Internal Compute Utilities
