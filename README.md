@@ -63,7 +63,7 @@ Include `BufferUtils.hlsl` and `DispatchHelper.hlsl` from the package path.
 
 ```hlsl
 #pragma kernel Main
-#pragma multi_compile _ DIRECT_DISPATCH INDIRECT_DISPATCH
+#pragma multi_compile_local _ DIRECT_DISPATCH INDIRECT_DISPATCH
 
 #include "Packages/com.abecombe.compute-utilities/Runtime/ComputeShaders/BufferUtils.hlsl"
 #include "Packages/com.abecombe.compute-utilities/Runtime/ComputeShaders/DispatchHelper.hlsl"
@@ -81,6 +81,8 @@ void Main(uint3 id : SV_DispatchThreadID)
 ```
 
 `DispatchThreads` sets `_DispatchThreadSize` for direct dispatch. It returns without dispatching when any requested dimension is `0`, and logs an error for negative sizes. `DispatchThreadsIndirect` switches to the `INDIRECT_DISPATCH` keyword, so the same `RETURN_IF_INVALID_THREAD` macro works for indirect dispatch.
+
+Dispatch keywords and keywords set with `EnableKeyword`, `DisableKeyword`, or `SetKeyword` are applied to the compute shader as `LocalKeyword`s, for immediate calls as well as `CommandBuffer` and `IComputeCommandBuffer` calls. Declare them with `multi_compile_local`; keywords declared with `multi_compile` can still be forced on by global keyword state. `GetLocalKeyword(name)` returns the cached `LocalKeyword`, and every keyword method also accepts a `LocalKeyword` directly.
 
 ## StructuredBuffer
 

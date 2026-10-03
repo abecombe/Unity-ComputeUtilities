@@ -19,6 +19,7 @@ namespace Abecombe.ComputeUtilities
 
         private Dictionary<string, int> _propertyIdByName = new();
         private Dictionary<(string, string[]), int[]> _propertyIdsByName = new();
+        private Dictionary<string, LocalKeyword> _localKeywordByName = new();
 
         private int[] _intArr = new int[4];
 
@@ -27,6 +28,7 @@ namespace Abecombe.ComputeUtilities
             _kernels.Clear();
             _propertyIdByName.Clear();
             _propertyIdsByName.Clear();
+            _localKeywordByName.Clear();
             if (_shader == null)
             {
                 Debug.LogError("Compute Shader is Null. Please set a Compute Shader to dispatch kernels.");
@@ -1094,60 +1096,122 @@ namespace Abecombe.ComputeUtilities
         #endregion
 
         #region SetKeyword
+        public LocalKeyword GetLocalKeyword(string name)
+        {
+            return FindLocalKeyword(name, true);
+        }
+
+        private LocalKeyword FindLocalKeyword(string name, bool warnIfMissing)
+        {
+            if (_localKeywordByName.TryGetValue(name, out var keyword))
+                return keyword;
+
+            keyword = Shader != null ? Shader.keywordSpace.FindKeyword(name) : default;
+            _localKeywordByName.Add(name, keyword);
+            if (!keyword.isValid && warnIfMissing)
+                Debug.LogWarning($"Keyword '{name}' is not declared in compute shader '{(Shader != null ? Shader.name : "null")}'.");
+            return keyword;
+        }
+
         public void EnableKeyword(string keyword)
         {
-            Shader.EnableKeyword(keyword);
+            SetKeyword(GetLocalKeyword(keyword), true);
         }
         public void DisableKeyword(string keyword)
         {
-            Shader.DisableKeyword(keyword);
+            SetKeyword(GetLocalKeyword(keyword), false);
         }
         public void SetKeyword(string keyword, bool enabled)
         {
-            if (enabled)
-                EnableKeyword(keyword);
-            else
-                DisableKeyword(keyword);
+            SetKeyword(GetLocalKeyword(keyword), enabled);
+        }
+        public void EnableKeyword(in LocalKeyword keyword)
+        {
+            SetKeyword(keyword, true);
+        }
+        public void DisableKeyword(in LocalKeyword keyword)
+        {
+            SetKeyword(keyword, false);
+        }
+        public void SetKeyword(in LocalKeyword keyword, bool enabled)
+        {
+            if (keyword.isValid)
+                Shader.SetKeyword(keyword, enabled);
         }
 
         public void EnableKeyword(CommandBuffer cb, string keyword)
         {
-            cb.EnableShaderKeyword(keyword);
+            SetKeyword(cb, GetLocalKeyword(keyword), true);
         }
         public void DisableKeyword(CommandBuffer cb, string keyword)
         {
-            cb.DisableShaderKeyword(keyword);
+            SetKeyword(cb, GetLocalKeyword(keyword), false);
         }
         public void SetKeyword(CommandBuffer cb, string keyword, bool enabled)
         {
-            if (enabled)
-                EnableKeyword(cb, keyword);
-            else
-                DisableKeyword(cb, keyword);
+            SetKeyword(cb, GetLocalKeyword(keyword), enabled);
+        }
+        public void EnableKeyword(CommandBuffer cb, in LocalKeyword keyword)
+        {
+            SetKeyword(cb, keyword, true);
+        }
+        public void DisableKeyword(CommandBuffer cb, in LocalKeyword keyword)
+        {
+            SetKeyword(cb, keyword, false);
+        }
+        public void SetKeyword(CommandBuffer cb, in LocalKeyword keyword, bool enabled)
+        {
+            if (keyword.isValid)
+                cb.SetKeyword(Shader, keyword, enabled);
         }
 
         public void EnableKeyword(IComputeCommandBuffer cb, string keyword)
         {
-            cb.EnableShaderKeyword(keyword);
+            SetKeyword(cb, GetLocalKeyword(keyword), true);
         }
         public void DisableKeyword(IComputeCommandBuffer cb, string keyword)
         {
-            cb.DisableShaderKeyword(keyword);
+            SetKeyword(cb, GetLocalKeyword(keyword), false);
         }
         public void SetKeyword(IComputeCommandBuffer cb, string keyword, bool enabled)
         {
-            if (enabled)
-                EnableKeyword(cb, keyword);
-            else
-                DisableKeyword(cb, keyword);
+            SetKeyword(cb, GetLocalKeyword(keyword), enabled);
+        }
+        public void EnableKeyword(IComputeCommandBuffer cb, in LocalKeyword keyword)
+        {
+            SetKeyword(cb, keyword, true);
+        }
+        public void DisableKeyword(IComputeCommandBuffer cb, in LocalKeyword keyword)
+        {
+            SetKeyword(cb, keyword, false);
+        }
+        public void SetKeyword(IComputeCommandBuffer cb, in LocalKeyword keyword, bool enabled)
+        {
+            if (keyword.isValid)
+                cb.SetKeyword(Shader, keyword, enabled);
+        }
+
+        private void SetDispatchKeywords(bool indirect)
+        {
+            SetKeyword(FindLocalKeyword(ComputeShaderUtility.DirectDispatch, false), !indirect);
+            SetKeyword(FindLocalKeyword(ComputeShaderUtility.IndirectDispatch, false), indirect);
+        }
+        private void SetDispatchKeywords(CommandBuffer cb, bool indirect)
+        {
+            SetKeyword(cb, FindLocalKeyword(ComputeShaderUtility.DirectDispatch, false), !indirect);
+            SetKeyword(cb, FindLocalKeyword(ComputeShaderUtility.IndirectDispatch, false), indirect);
+        }
+        private void SetDispatchKeywords(IComputeCommandBuffer cb, bool indirect)
+        {
+            SetKeyword(cb, FindLocalKeyword(ComputeShaderUtility.DirectDispatch, false), !indirect);
+            SetKeyword(cb, FindLocalKeyword(ComputeShaderUtility.IndirectDispatch, false), indirect);
         }
         #endregion
 
         #region DispatchGroups
         public void DispatchGroups(int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            EnableKeyword(ComputeShaderUtility.DirectDispatch);
-            DisableKeyword(ComputeShaderUtility.IndirectDispatch);
+            SetDispatchKeywords(false);
             Shader.Dispatch(kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
         public void DispatchGroups(ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
@@ -1157,8 +1221,7 @@ namespace Abecombe.ComputeUtilities
 
         public void DispatchGroups(CommandBuffer cb, int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            EnableKeyword(cb, ComputeShaderUtility.DirectDispatch);
-            DisableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
+            SetDispatchKeywords(cb, false);
             cb.DispatchCompute(Shader, kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
         public void DispatchGroups(CommandBuffer cb, ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
@@ -1168,8 +1231,7 @@ namespace Abecombe.ComputeUtilities
 
         public void DispatchGroups(IComputeCommandBuffer cb, int kernelIndex, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
         {
-            EnableKeyword(cb, ComputeShaderUtility.DirectDispatch);
-            DisableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
+            SetDispatchKeywords(cb, false);
             cb.DispatchCompute(Shader, kernelIndex, threadGroupsX, threadGroupsY, threadGroupsZ);
         }
         public void DispatchGroups(IComputeCommandBuffer cb, ComputeKernel kernel, int threadGroupsX, int threadGroupsY = 1, int threadGroupsZ = 1)
@@ -1181,8 +1243,7 @@ namespace Abecombe.ComputeUtilities
         #region DispatchIndirect
         public void DispatchIndirect(int kernelIndex, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
-            DisableKeyword(ComputeShaderUtility.DirectDispatch);
-            EnableKeyword(ComputeShaderUtility.IndirectDispatch);
+            SetDispatchKeywords(true);
             Shader.DispatchIndirect(kernelIndex, argsBuffer, argsOffset);
         }
         public void DispatchIndirect(ComputeKernel kernel, GraphicsBuffer argsBuffer, uint argsOffset = 0)
@@ -1192,8 +1253,7 @@ namespace Abecombe.ComputeUtilities
 
         public void DispatchIndirect(CommandBuffer cb, int kernelIndex, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
-            DisableKeyword(cb, ComputeShaderUtility.DirectDispatch);
-            EnableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
+            SetDispatchKeywords(cb, true);
             cb.DispatchCompute(Shader, kernelIndex, argsBuffer, argsOffset);
         }
         public void DispatchIndirect(CommandBuffer cb, ComputeKernel kernel, GraphicsBuffer argsBuffer, uint argsOffset = 0)
@@ -1203,8 +1263,7 @@ namespace Abecombe.ComputeUtilities
 
         public void DispatchIndirect(IComputeCommandBuffer cb, int kernelIndex, GraphicsBuffer argsBuffer, uint argsOffset = 0)
         {
-            DisableKeyword(cb, ComputeShaderUtility.DirectDispatch);
-            EnableKeyword(cb, ComputeShaderUtility.IndirectDispatch);
+            SetDispatchKeywords(cb, true);
             cb.DispatchCompute(Shader, kernelIndex, argsBuffer, argsOffset);
         }
         public void DispatchIndirect(IComputeCommandBuffer cb, ComputeKernel kernel, GraphicsBuffer argsBuffer, uint argsOffset = 0)
