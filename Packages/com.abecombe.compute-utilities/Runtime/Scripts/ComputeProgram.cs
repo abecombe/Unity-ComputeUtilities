@@ -21,6 +21,10 @@ namespace Abecombe.ComputeUtilities
         private Dictionary<(string, string[]), int[]> _propertyIdsByName = new();
         private Dictionary<string, LocalKeyword> _localKeywordByName = new();
 
+        private LocalKeyword _directDispatchKeyword;
+        private LocalKeyword _indirectDispatchKeyword;
+        private bool _dispatchKeywordsResolved;
+
         private int[] _intArr = new int[4];
 
         public void Init()
@@ -29,6 +33,7 @@ namespace Abecombe.ComputeUtilities
             _propertyIdByName.Clear();
             _propertyIdsByName.Clear();
             _localKeywordByName.Clear();
+            _dispatchKeywordsResolved = false;
             if (_shader == null)
             {
                 Debug.LogError("Compute Shader is Null. Please set a Compute Shader to dispatch kernels.");
@@ -1191,20 +1196,32 @@ namespace Abecombe.ComputeUtilities
                 cb.SetKeyword(Shader, keyword, enabled);
         }
 
+        private void ResolveDispatchKeywords()
+        {
+            if (_dispatchKeywordsResolved)
+                return;
+
+            _directDispatchKeyword = FindLocalKeyword(ComputeShaderUtility.DirectDispatch, false);
+            _indirectDispatchKeyword = FindLocalKeyword(ComputeShaderUtility.IndirectDispatch, false);
+            _dispatchKeywordsResolved = true;
+        }
         private void SetDispatchKeywords(bool indirect)
         {
-            SetKeyword(FindLocalKeyword(ComputeShaderUtility.DirectDispatch, false), !indirect);
-            SetKeyword(FindLocalKeyword(ComputeShaderUtility.IndirectDispatch, false), indirect);
+            ResolveDispatchKeywords();
+            SetKeyword(_directDispatchKeyword, !indirect);
+            SetKeyword(_indirectDispatchKeyword, indirect);
         }
         private void SetDispatchKeywords(CommandBuffer cb, bool indirect)
         {
-            SetKeyword(cb, FindLocalKeyword(ComputeShaderUtility.DirectDispatch, false), !indirect);
-            SetKeyword(cb, FindLocalKeyword(ComputeShaderUtility.IndirectDispatch, false), indirect);
+            ResolveDispatchKeywords();
+            SetKeyword(cb, _directDispatchKeyword, !indirect);
+            SetKeyword(cb, _indirectDispatchKeyword, indirect);
         }
         private void SetDispatchKeywords(IComputeCommandBuffer cb, bool indirect)
         {
-            SetKeyword(cb, FindLocalKeyword(ComputeShaderUtility.DirectDispatch, false), !indirect);
-            SetKeyword(cb, FindLocalKeyword(ComputeShaderUtility.IndirectDispatch, false), indirect);
+            ResolveDispatchKeywords();
+            SetKeyword(cb, _directDispatchKeyword, !indirect);
+            SetKeyword(cb, _indirectDispatchKeyword, indirect);
         }
         #endregion
 
